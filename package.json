@@ -1,8 +1,8 @@
 {
-  "name": "election-night-reporting",
+  "name": "election-results-reporting",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://votingworks.github.io/election-night-reporting",
+  "homepage": "http://votingworks.github.io/election-results-reporting",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",

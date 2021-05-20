@@ -1,3 +1,3 @@
 # Demo Election Night Reporting App
 
-<http://votingworks.github.io/election-night-reporting>
+<http://votingworks.github.io/election-results-reporting>
