@@ -12,7 +12,10 @@ import election from './data/election.json'
 
 // TODO: Use external results when types are simpler.
 // import electionResults from './data/electionResults.json'
+const now = new Date()
 const results: Results = {
+  isOfficial: false,
+  lastUpdatedDate: new Date(now.setMinutes(now.getMinutes() - 30)),
   registeredVoterCount: 2593,
   ballotsReceived: 327,
   ballotsCounted: 87,
@@ -56,26 +59,61 @@ const NavigationContent = styled.div`
   display: flex;
   flex-direction: column;
 `
-const SealImg = styled.img`
-  max-width: 70px;
+const Brand = styled.div`
+  position: relative;
+  width: 70px;
+  height: 70px;
   margin: 0.5rem;
+  @media (min-width: 568px) {
+    width: 120px;
+    height: 90px;
+    padding: 1rem;
+    margin: 0.5rem 1rem;
+  }
+  @media print, (min-width: ${1200 + (2 * 16)}px) {
+    margin-left: 0;
+  }
+`
+const SealImg = styled.img`
+  max-width: 100%;
+  border-radius: 100%;
+  box-shadow: 0 1px 4px #666666;
+  @media (min-width: 568px) {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
 `
 const NavHeader = styled.div`
   display: flex;
   flex: 1;
   align-items: center;
   color: #ffffff;
+  line-height: 1.25;
 `
-
+const ElectionTitle = styled.div`
+  @media print, (min-width: 568px) {
+    font-size: 1.5rem;
+  }
+`
+const ElectionDate = styled.div`
+  font-size: 0.9rem;
+  @media print, (min-width: 568px) {
+    font-size: 1rem;
+  }
+`
 const NavTabs = styled.div`
   display: flex;
   flex-wrap: nowrap;
+  @media print {
+    display: none;
+  }
 `
 const NavTab = styled.a<{ active?: boolean }>`
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1rem 0.25rem;
   margin-right: 0.5rem;
-  background: ${({ active }) => active ? '#eeeeee' : '#999999'};
-  border-radius: 0.25rem 0.25rem 0 0;
+  background: ${({ active }) => active ? '#eeeeee' : '#003334'};
+  border-radius: 0.3rem 0.3rem 0 0;
   color: ${({ active }) => active ? '#000000' : '#ffffff'};
   font-size: 1.25rem;
   text-decoration: none;
@@ -90,10 +128,10 @@ const Container = styled.div`
 const PageHeader = styled.div`
   padding: 0.5rem;
   line-height: 1.25;
-  @media (min-width: 768px) {
-    padding: 1rem;
+  @media (min-width: 568px) {
+    padding: 1.25rem 1rem 1rem;
   }
-  @media (min-width: ${1200 + (2 * 16)}px) {
+  @media print, (min-width: ${1200 + (2 * 16)}px) {
     padding-right: 0;
     padding-left: 0;
   }
@@ -102,7 +140,7 @@ const Headline = styled.h1`
   font-size: 2rem;
 `
 const LastUpdated = styled.p`
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 `
 
 const DataPoint = styled.div`
@@ -112,24 +150,30 @@ const DataPoint = styled.div`
     font-weight: 700;
   }
   div:last-child {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
 `
 
 const Contests = styled.div`
   display: grid;
+  margin-bottom: 4rem;
   grid-column-gap: 16px;
   grid-row-gap: 16px;
   grid-template-columns: repeat(1, 1fr);
-  @media (min-width: 768px) {
-    margin: 0 1rem;
+  @media print {
     grid-template-columns: repeat(2, 1fr);
   }
-  @media (min-width: 992px) {
+  @media (min-width: 568px) {
+    margin-right: 1rem;
+    margin-left: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
   }
   @media (min-width: ${1200 + (2 * 16)}px) {
-    margin: 0;
+    margin-right: 0;
+    margin-left: 0;
   }
 `
 
@@ -138,14 +182,19 @@ const Contest = styled.div`
   padding: 1rem;
   background: #ffffff;
   box-shadow: 0 1px 4px #666666;
-  @media (min-width: 768px) {
-    border-radius: 0.25rem;
+  @media (min-width: 568px) {
+    border-radius: 0.3rem;
+  }
+  @media print {
+    border: 1px solid #000000;
+    box-shadow: none;
   }
 `
 const ContestSection = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 `
 const ContestTitle = styled.h2`
+  margin-top: 0.25rem;
   font-size: 1.5rem;
 `
 const Row = styled.div`
@@ -155,9 +204,10 @@ const Row = styled.div`
 `
 
 const Candidate = styled(Row)`
-  padding-top: 0.5rem;
+  align-items: flex-start;
+  padding-top: 0.75rem;
   border-top: 1px solid #999999;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   &:first-child {
     margin-top: 0.25rem;
   }
@@ -167,6 +217,7 @@ const CandidateDataColumn = styled.div`
   line-height: 1.25;
   &:last-child {
     margin-left: 0.5rem;
+    text-align: right;
   }
 `
 const CandidateMain = styled.div`
@@ -174,11 +225,11 @@ const CandidateMain = styled.div`
   font-weight: 700;
 `
 const CandidateDetail = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   white-space: nowrap;
 `
 
-const now = new Date()
+
 const formatPercentage = (a: number, b: number): string =>
   `${(Math.round((a / b) * 10000) / 100).toFixed(2)}%`
 const getPartyById = (id: string) =>
@@ -193,16 +244,18 @@ const App: React.FC = () => (
     <NavigationBanner>
       <Container>
         <Navigation>
-          <SealImg
-            src={`/election-results-reporting${election.sealURL}`}
-            alt="seal"
-          />
+          <Brand>
+            <SealImg
+              src={`/election-results-reporting${election.sealURL}`}
+              alt="seal"
+            />
+          </Brand>
           <NavigationContent>
             <NavHeader>
-              <p>
-                <div>{election.title}</div>
-                <small>{localeWeekdayAndDate.format(new Date(election.date))}</small>
-              </p>
+              <div>
+                <ElectionTitle>{election.title}</ElectionTitle>
+                <ElectionDate>{localeWeekdayAndDate.format(new Date(election.date))}</ElectionDate>
+              </div>
             </NavHeader>
             <NavTabs>
               <NavTab active href="#active">Results</NavTab>
@@ -214,50 +267,44 @@ const App: React.FC = () => (
     </NavigationBanner>
     <Container>
       <PageHeader>
-        <Headline>Unoffical Results</Headline>
+        <Headline>
+          {results.isOfficial ? 'Offical Results':'Unoffical Results'}
+        </Headline>
         <LastUpdated>
           Last updated:{' '}
-          {localeLongDateAndTime.format(now.setMinutes(now.getMinutes() - 30))}
+          {localeLongDateAndTime.format(results.lastUpdatedDate)}
         </LastUpdated>
         <DataPoint>
           <div>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} Voter Turnout</div>
           <div>
             <NoWrap>{results.registeredVoterCount} registered voters /</NoWrap>{' '}
-            <NoWrap>{totalBallotsCounted} ballots received and counted thus far</NoWrap>
+            <NoWrap>
+              {
+                results.isOfficial
+                  ? `${totalBallotsCounted} ballots counted`
+                  : `${totalBallotsCounted} ballots counted thus far`
+              }
+            </NoWrap>
           </div>
         </DataPoint>
-        {/* <div>
-          <h2>
-            {formatPercentage(
-              results.ballotsReceived,
-              results.registeredVoterCount
-            )}{' '}
-            Voter Turnout
-          </h2>
-          <small>
-            {results.ballotsReceived} ballots received /{' '}
-            {results.registeredVoterCount} registered voters
-          </small>
-        </div>
-        <div>
-          <h2>
-            {formatPercentage(results.ballotsCounted, results.ballotsReceived)}{' '}
-            Ballots Counted
-          </h2>
-          <small>
-            {results.ballotsCounted} ballots counted / {results.ballotsReceived}{' '}
-            ballots received
-          </small>
-        </div> */}
       </PageHeader>
     </Container>
     <Container>
       <Contests>
         {election.contests.map(
-          ({ section, title, seats, candidates, id: contestId }) => {
+          ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
             const contestVotes = sumCandidateVotes(
               results.contests[contestId].candidates
             )
+            const writeIn = {
+              id: 'writeIn',
+              name: 'Write-In',
+              partyId: ''
+            }
+            const candidates = [
+              ...contestCandidates,
+              writeIn,
+            ]
             return (
               <Contest>
                 <Row>
@@ -267,7 +314,7 @@ const App: React.FC = () => (
                   </div>
                   <CandidateDataColumn>
                     <CandidateDetail>
-                      <small>{seats} seat</small>
+                      {seats} seat
                     </CandidateDetail>
                   </CandidateDataColumn>
                 </Row>

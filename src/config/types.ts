@@ -9,6 +9,8 @@ export interface ResultsContest {
 }
 
 export interface Results {
+  isOfficial: boolean
+  lastUpdatedDate: Date
   registeredVoterCount: number
   ballotsReceived: number
   ballotsCounted: number
