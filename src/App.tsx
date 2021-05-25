@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import './App.css'
 import styled from 'styled-components'
 
@@ -22,23 +22,23 @@ const results: Results = {
   contests: {
     '775023387': {
       candidates: {
-        '775033907': 28,
-        '775036124': 47,
-        '775036125': 12,
-        'writeIn': 0,
+        '775033907': 248,
+        '775036124': 427,
+        '775036125': 120,
+        'writeIn': 7,
       },
     },
     '775023385': {
       candidates: {
-        '775033203': 87,
-        'writeIn': 0,
+        '775033203': 447,
+        'writeIn': 22,
       },
     },
     '775023386': {
       candidates: {
-        '775033204': 62,
-        '775036126': 25,
-        'writeIn': 0,
+        '775033204': 322,
+        '775036126': 325,
+        'writeIn': 14,
       },
     },
   },
@@ -110,12 +110,12 @@ const NavTabs = styled.div`
   }
 `
 const NavTab = styled.a<{ active?: boolean }>`
-  padding: 0.5rem 1rem 0.25rem;
+  padding: 0.5rem 1rem;
   margin-right: 0.5rem;
   background: ${({ active }) => active ? '#eeeeee' : '#003334'};
   border-radius: 0.3rem 0.3rem 0 0;
   color: ${({ active }) => active ? '#000000' : '#ffffff'};
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   text-decoration: none;
 `
 
@@ -149,14 +149,6 @@ const ElectionTitle = styled.h2`
 
 const DataPoint = styled.div`
   margin-top: 0.5rem;
-
-  /* div:first-child {
-    font-size: 1.25rem;
-    font-weight: 700;
-  }
-  div:last-child {
-    font-size: 0.9rem;
-  } */
 `
 
 const Actions = styled.div`
@@ -173,7 +165,6 @@ const PrintButton = styled.button`
   border: none;
   background: #003334;
   border-radius: 0.25em;
-  box-shadow: 0 0 0 0 rgba(71, 167, 75, 1);
   color: #ffffff;
   cursor: pointer;
   line-height: 1.25;
@@ -204,7 +195,7 @@ const Contests = styled.div`
 
 const Contest = styled.div`
   flex: 1;
-  padding: 1rem;
+  padding: 1rem 1rem 0.75rem;
   background: #ffffff;
   box-shadow: 0 1px 4px #666666;
   @media (min-width: 568px) {
@@ -228,14 +219,29 @@ const Row = styled.div`
   justify-content: space-between;
 `
 
-const Candidate = styled(Row)`
-  align-items: flex-start;
-  padding-top: 0.75rem;
+const Candidate = styled.div`
+  position: relative;
+  padding-top: 0.5rem;
   border-top: 1px solid #999999;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   &:first-child {
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
   }
+`
+
+const CandidateProgressBar = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  & > div {
+    height: 4px;
+    background: #ffc55d;
+  }
+`
+
+const CandidateRow = styled(Row)`
+  align-items: flex-start;
 `
 
 const CandidateDataColumn = styled.div`
@@ -257,13 +263,30 @@ const CandidateDetail = styled.div`
 const Refresh = styled.div`
   padding: 0.5rem;
   margin: 0 0 4rem;
-  line-height: 1.25;
+  font-size: 0.9rem;
+  text-align: center;
   @media (min-width: 568px) {
     padding: 1.25rem 1rem 1rem;
   }
   @media print, (min-width: ${1200 + (2 * 16)}px) {
     padding-right: 0;
     padding-left: 0;
+  }
+`
+
+const ProgressBar = styled.div`
+  position: relative;
+  overflow: hidden;
+  height: 3px;
+  background: #336733;
+  & > div {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 3px;
+    background: #ffc55d;
+    transition: transform 1s linear;
   }
 `
 
@@ -276,55 +299,72 @@ const sumCandidateVotes = (candidates: ResultsCandidates): number =>
 const totalBallotsCounted = election.contests.reduce((prev, curr) =>
   prev + sumCandidateVotes(results.contests[curr.id].candidates), 0)
 
-const App: React.FC = () => (
-  <div>
-    <NavigationBanner>
+const refreshInterval = 60
+const App: React.FC = () => {
+  const [ refreshCountdown, setRefreshCountdown ] = useState(refreshInterval)
+  if (refreshCountdown === 0) {
+    console.log('Fetching new data!')
+  }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
+    }, 1000);
+    return () => clearTimeout(timer)
+  })
+  return (
+    <div>
+      <ProgressBar>
+        <div style={{
+          transform: `translateX(${100 - (refreshCountdown / refreshInterval * 100)}%)`,
+          transition: refreshCountdown == refreshInterval ? 'none' : undefined,
+        }} />
+      </ProgressBar>
+      <NavigationBanner>
+        <Container>
+          <Navigation>
+            <Brand>
+              <SealImg
+                src={`/election-results-reporting${election.sealURL}`}
+                alt="seal"
+              />
+            </Brand>
+            <NavigationContent>
+              <NavHeader>
+                <div>
+                  <NavTitle>{election.county.name}, {election.state}</NavTitle>
+                  {/* <ElectionDate>{localeWeekdayAndDate.format(new Date(election.date))}</ElectionDate> */}
+                </div>
+              </NavHeader>
+              <NavTabs>
+                <NavTab active href="#results">Results</NavTab>
+                <NavTab href="#info">Voting Info</NavTab>
+              </NavTabs>
+            </NavigationContent>
+          </Navigation>
+        </Container>
+      </NavigationBanner>
       <Container>
-        <Navigation>
-          <Brand>
-            <SealImg
-              src={`/election-results-reporting${election.sealURL}`}
-              alt="seal"
-            />
-          </Brand>
-          <NavigationContent>
-            <NavHeader>
-              <div>
-                <NavTitle>{election.county.name}, {election.state}</NavTitle>
-                {/* <ElectionDate>{localeWeekdayAndDate.format(new Date(election.date))}</ElectionDate> */}
-              </div>
-            </NavHeader>
-            <NavTabs>
-              <NavTab active href="#results">Results</NavTab>
-              <NavTab href="#info">Voting Info</NavTab>
-            </NavTabs>
-          </NavigationContent>
-        </Navigation>
-      </Container>
-    </NavigationBanner>
-    <Container>
-      <PageHeader>
-        <Actions>
-          <PrintButton onClick={() => {window.print()}}>Print Results</PrintButton>
-        </Actions>
-        <Headline>
-          {results.isOfficial ? 'Offical Results':'Unoffical Results'}
-        </Headline>
-        <LastUpdated>
-          Results last updated at{' '}
-          {localeLongDateAndTime.format(results.lastUpdatedDate)}.{' '}
-          Official results will be finalized when the election is certified on DATE.
-        </LastUpdated>
-        <div>
-        </div>
-        <ElectionTitle>{election.title}</ElectionTitle>
-        <ElectionDate>
-          <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
-          <NoWrap>Vote from 7am – 7pm.</NoWrap>
-        </ElectionDate>
-        <DataPoint>
+        <PageHeader>
+          <Actions>
+            <PrintButton onClick={() => {window.print()}}>Print Results</PrintButton>
+          </Actions>
+          <Headline>
+            {results.isOfficial ? 'Offical Results':'Unoffical Results'}
+          </Headline>
+          <LastUpdated>
+            Results last updated at{' '}
+            {localeLongDateAndTime.format(results.lastUpdatedDate)}.{' '}
+            Official results will be finalized when the election is certified on DATE.
+          </LastUpdated>
           <div>
-            <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} Voter Turnout =</NoWrap>{' '}
+          </div>
+          <ElectionTitle>{election.title}</ElectionTitle>
+          <ElectionDate>
+            <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
+            <NoWrap>Vote from 7am – 7pm.</NoWrap>
+          </ElectionDate>
+          <DataPoint>
+            <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
             <NoWrap>{results.registeredVoterCount} registered voters /</NoWrap>{' '}
             <NoWrap>
               {
@@ -333,69 +373,79 @@ const App: React.FC = () => (
                   : `${totalBallotsCounted} ballots counted thus far`
               }
             </NoWrap>
-          </div>
-        </DataPoint>
-      </PageHeader>
-    </Container>
-    <Container>
-      <Contests>
-        {election.contests.map(
-          ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
-            const contestVotes = sumCandidateVotes(
-              results.contests[contestId].candidates
-            )
-            const writeIn = {
-              id: 'writeIn',
-              name: 'Write-In',
-              partyId: ''
-            }
-            const candidates = [
-              ...contestCandidates,
-              writeIn,
-            ]
-            return (
-              <Contest>
-                <Row>
+          </DataPoint>
+        </PageHeader>
+      </Container>
+      <Container>
+        <Contests>
+          {election.contests.map(
+            ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
+              const contestVotes = sumCandidateVotes(
+                results.contests[contestId].candidates
+              )
+              const writeIn = {
+                id: 'writeIn',
+                name: 'Write-In',
+                partyId: ''
+              }
+              const candidates = [
+                ...contestCandidates,
+                writeIn,
+              ]
+              return (
+                <Contest key={contestId}>
+                  <Row>
+                    <div>
+                      <ContestSection>{section}</ContestSection>
+                      <ContestTitle>{title}</ContestTitle>
+                    </div>
+                    <CandidateDataColumn>
+                      <CandidateDetail>
+                        {seats} winner
+                      </CandidateDetail>
+                    </CandidateDataColumn>
+                  </Row>
                   <div>
-                    <ContestSection>{section}</ContestSection>
-                    <ContestTitle>{title}</ContestTitle>
+                    {candidates
+                      .sort((a, b) =>
+                        results.contests[contestId].candidates[b.id]
+                        - results.contests[contestId].candidates[a.id]
+                      )
+                      .map(({ id: candidateId, name, partyId }) => {
+                      const candidateVotes =
+                        results.contests[contestId].candidates[candidateId]
+                      return (
+                        <Candidate key={candidateId}>
+                          <CandidateProgressBar>
+                            <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
+                          </CandidateProgressBar>
+                          <CandidateRow data-percentage="50%">
+                            <CandidateDataColumn>
+                              <CandidateMain as="h3">{name}</CandidateMain>
+                              <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
+                            </CandidateDataColumn>
+                            <CandidateDataColumn>
+                              <CandidateMain>
+                                {formatPercentage(candidateVotes, contestVotes)}
+                              </CandidateMain>
+                              <CandidateDetail>{candidateVotes} votes</CandidateDetail>
+                            </CandidateDataColumn>
+                          </CandidateRow>
+                        </Candidate>
+                      )
+                    })}
                   </div>
-                  <CandidateDataColumn>
-                    <CandidateDetail>
-                      {seats} winner
-                    </CandidateDetail>
-                  </CandidateDataColumn>
-                </Row>
-                <div>
-                  {candidates.map(({ id: candidateId, name, partyId }) => {
-                    const candidateVotes =
-                      results.contests[contestId].candidates[candidateId]
-                    return (
-                      <Candidate>
-                        <CandidateDataColumn>
-                          <CandidateMain as="h3">{name}</CandidateMain>
-                          <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
-                        </CandidateDataColumn>
-                        <CandidateDataColumn>
-                          <CandidateMain>
-                            {formatPercentage(candidateVotes, contestVotes)}
-                          </CandidateMain>
-                          <CandidateDetail>{candidateVotes} votes</CandidateDetail>
-                        </CandidateDataColumn>
-                      </Candidate>
-                    )
-                  })}
-                </div>
-              </Contest>
-            )
-          }
-        )}
-      </Contests>
-    </Container>
-    <Container>
-      <Refresh>This page will refresh in 5 minutes.</Refresh>
-    </Container>
-  </div>
-)
+                </Contest>
+              )
+            }
+          )}
+        </Contests>
+      </Container>
+      <Container>
+        <Refresh>This page will automatically refresh every 1 minute.</Refresh>
+      </Container>
+    </div>
+  )
+}
 
 export default App
