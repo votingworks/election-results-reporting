@@ -1,6 +1,6 @@
 {
   "short_name": "Election Results",
-  "name": "Election Results",
+  "name": "Election Results - City of Vicksburg, Mississippi",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,12 +8,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "vicksburg192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "logo512vicksburg512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
