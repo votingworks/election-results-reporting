@@ -32,6 +32,10 @@ img {
   display: block;
 }
 
+button {
+  font-size: inherit;
+}
+
 :link,
 :visited {
   color: rgb(0, 0, 238);

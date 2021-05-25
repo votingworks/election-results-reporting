@@ -8,7 +8,7 @@ import {
   localeWeekdayAndDate,
 } from './utils/IntlDateTimeFormats'
 
-import election from './data/election.json'
+import election from './data/err-election.json'
 
 // TODO: Use external results when types are simpler.
 // import electionResults from './data/electionResults.json'
@@ -49,7 +49,7 @@ const NoWrap = styled.span`
 `
 
 const NavigationBanner = styled.div`
-  background: #008080;
+  background: #336733;
 `
 const Navigation = styled.div`
   display: flex;
@@ -91,7 +91,7 @@ const NavHeader = styled.div`
   color: #ffffff;
   line-height: 1.25;
 `
-const ElectionTitle = styled.div`
+const NavTitle = styled.div`
   @media print, (min-width: 568px) {
     font-size: 1.5rem;
   }
@@ -142,21 +142,46 @@ const Headline = styled.h1`
 const LastUpdated = styled.p`
   font-size: 0.9rem;
 `
+const ElectionTitle = styled.h2`
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+`
 
 const DataPoint = styled.div`
   margin-top: 0.5rem;
-  div:first-child {
+
+  /* div:first-child {
     font-size: 1.25rem;
     font-weight: 700;
   }
   div:last-child {
     font-size: 0.9rem;
+  } */
+`
+
+const Actions = styled.div`
+  display: none;
+  float: right;
+  @media (min-width: 768px) {
+    display: block;
   }
+`
+
+const PrintButton = styled.button`
+  display: inline-block;
+  padding: 0.5em 1em;
+  border: none;
+  background: #003334;
+  border-radius: 0.25em;
+  box-shadow: 0 0 0 0 rgba(71, 167, 75, 1);
+  color: #ffffff;
+  cursor: pointer;
+  line-height: 1.25;
 `
 
 const Contests = styled.div`
   display: grid;
-  margin-bottom: 4rem;
+  margin-bottom: 1rem;
   grid-column-gap: 16px;
   grid-row-gap: 16px;
   grid-template-columns: repeat(1, 1fr);
@@ -229,6 +254,18 @@ const CandidateDetail = styled.div`
   white-space: nowrap;
 `
 
+const Refresh = styled.div`
+  padding: 0.5rem;
+  margin: 0 0 4rem;
+  line-height: 1.25;
+  @media (min-width: 568px) {
+    padding: 1.25rem 1rem 1rem;
+  }
+  @media print, (min-width: ${1200 + (2 * 16)}px) {
+    padding-right: 0;
+    padding-left: 0;
+  }
+`
 
 const formatPercentage = (a: number, b: number): string =>
   `${(Math.round((a / b) * 10000) / 100).toFixed(2)}%`
@@ -253,13 +290,13 @@ const App: React.FC = () => (
           <NavigationContent>
             <NavHeader>
               <div>
-                <ElectionTitle>{election.title}</ElectionTitle>
-                <ElectionDate>{localeWeekdayAndDate.format(new Date(election.date))}</ElectionDate>
+                <NavTitle>{election.county.name}, {election.state}</NavTitle>
+                {/* <ElectionDate>{localeWeekdayAndDate.format(new Date(election.date))}</ElectionDate> */}
               </div>
             </NavHeader>
             <NavTabs>
-              <NavTab active href="#active">Results</NavTab>
-              <NavTab href="#precincts">Precincts</NavTab>
+              <NavTab active href="#results">Results</NavTab>
+              <NavTab href="#info">Voting Info</NavTab>
             </NavTabs>
           </NavigationContent>
         </Navigation>
@@ -267,16 +304,27 @@ const App: React.FC = () => (
     </NavigationBanner>
     <Container>
       <PageHeader>
+        <Actions>
+          <PrintButton onClick={() => {window.print()}}>Print Results</PrintButton>
+        </Actions>
         <Headline>
           {results.isOfficial ? 'Offical Results':'Unoffical Results'}
         </Headline>
         <LastUpdated>
-          Last updated:{' '}
-          {localeLongDateAndTime.format(results.lastUpdatedDate)}
+          Results last updated at{' '}
+          {localeLongDateAndTime.format(results.lastUpdatedDate)}.{' '}
+          Official results will be finalized when the election is certified on DATE.
         </LastUpdated>
+        <div>
+        </div>
+        <ElectionTitle>{election.title}</ElectionTitle>
+        <ElectionDate>
+          <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
+          <NoWrap>Vote from 7am – 7pm.</NoWrap>
+        </ElectionDate>
         <DataPoint>
-          <div>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} Voter Turnout</div>
           <div>
+            <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} Voter Turnout =</NoWrap>{' '}
             <NoWrap>{results.registeredVoterCount} registered voters /</NoWrap>{' '}
             <NoWrap>
               {
@@ -314,7 +362,7 @@ const App: React.FC = () => (
                   </div>
                   <CandidateDataColumn>
                     <CandidateDetail>
-                      {seats} seat
+                      {seats} winner
                     </CandidateDetail>
                   </CandidateDataColumn>
                 </Row>
@@ -343,6 +391,9 @@ const App: React.FC = () => (
           }
         )}
       </Contests>
+    </Container>
+    <Container>
+      <Refresh>This page will refresh in 5 minutes.</Refresh>
     </Container>
   </div>
 )
