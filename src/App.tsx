@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
+import dashify from 'dashify'
 import styled from 'styled-components'
 
 import { ResultsCandidates, Results} from './config/types'
@@ -90,12 +91,11 @@ const NavHeader = styled.div`
   align-items: center;
   color: #ffffff;
   line-height: 1.25;
-`
-const NavTitle = styled.div`
   @media print, (min-width: 568px) {
     font-size: 1.5rem;
   }
 `
+
 const ElectionDate = styled.div`
   font-size: 0.9rem;
   @media print, (min-width: 568px) {
@@ -109,7 +109,7 @@ const NavTabs = styled.div`
     display: none;
   }
 `
-const NavTab = styled.a<{ active?: boolean }>`
+const NavTab = styled.button<{ active?: boolean }>`
   padding: 0.5rem 1rem;
   margin-right: 0.5rem;
   background: ${({ active }) => active ? '#eeeeee' : '#003334'};
@@ -159,7 +159,7 @@ const Actions = styled.div`
   }
 `
 
-const PrintButton = styled.button`
+const Button = styled.button`
   display: inline-block;
   padding: 0.5em 1em;
   border: none;
@@ -168,6 +168,7 @@ const PrintButton = styled.button`
   color: #ffffff;
   cursor: pointer;
   line-height: 1.25;
+  text-decoration: none;
 `
 
 const Contests = styled.div`
@@ -289,6 +290,26 @@ const ProgressBar = styled.div`
     transition: transform 1s linear;
   }
 `
+const PrecinctsHeading = styled.h2`
+  margin: 1rem 0 0.5rem;
+`
+const PrecinctsList = styled.div`
+  column-gap: 1rem;
+  @media (min-width: 568px) {
+    columns: 2;
+  }
+  @media (min-width: 768px) {
+    columns: 3;
+  }
+`
+const Precinct = styled.div`
+  margin-bottom: 1.5rem;
+  break-inside: avoid;
+`
+const PrecinctAddress = styled.div`
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+`
 
 const formatPercentage = (a: number, b: number): string =>
   `${(Math.round((a / b) * 10000) / 100).toFixed(2)}%`
@@ -311,12 +332,15 @@ const App: React.FC = () => {
     }, 1000);
     return () => clearTimeout(timer)
   })
+
+  const [ currentPage, setCurrentPage ] = useState('results')
+
   return (
     <div>
       <ProgressBar>
         <div style={{
           transform: `translateX(${100 - (refreshCountdown / refreshInterval * 100)}%)`,
-          transition: refreshCountdown == refreshInterval ? 'none' : undefined,
+          transition: refreshCountdown === refreshInterval ? 'none' : undefined,
         }} />
       </ProgressBar>
       <NavigationBanner>
@@ -329,121 +353,153 @@ const App: React.FC = () => {
               />
             </Brand>
             <NavigationContent>
-              <NavHeader>
-                <div>
-                  <NavTitle>{election.county.name}, {election.state}</NavTitle>
-                  {/* <ElectionDate>{localeWeekdayAndDate.format(new Date(election.date))}</ElectionDate> */}
-                </div>
-              </NavHeader>
+              <NavHeader>{election.county.name}, {election.state}</NavHeader>
               <NavTabs>
-                <NavTab active href="#results">Results</NavTab>
-                <NavTab href="#info">Voting Info</NavTab>
+                <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
+                <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
               </NavTabs>
             </NavigationContent>
           </Navigation>
         </Container>
       </NavigationBanner>
-      <Container>
-        <PageHeader>
-          <Actions>
-            <PrintButton onClick={() => {window.print()}}>Print Results</PrintButton>
-          </Actions>
-          <Headline>
-            {results.isOfficial ? 'Offical Results':'Unoffical Results'}
-          </Headline>
-          <LastUpdated>
-            Results last updated at{' '}
-            {localeLongDateAndTime.format(results.lastUpdatedDate)}.{' '}
-            Official results will be finalized when the election is certified on DATE.
-          </LastUpdated>
-          <div>
-          </div>
-          <ElectionTitle>{election.title}</ElectionTitle>
-          <ElectionDate>
-            <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
-            <NoWrap>Vote from 7am – 7pm.</NoWrap>
-          </ElectionDate>
-          <DataPoint>
-            <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
-            <NoWrap>{results.registeredVoterCount} registered voters /</NoWrap>{' '}
-            <NoWrap>
-              {
-                results.isOfficial
-                  ? `${totalBallotsCounted} ballots counted`
-                  : `${totalBallotsCounted} ballots counted thus far`
-              }
-            </NoWrap>
-          </DataPoint>
-        </PageHeader>
-      </Container>
-      <Container>
-        <Contests>
-          {election.contests.map(
-            ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
-              const contestVotes = sumCandidateVotes(
-                results.contests[contestId].candidates
-              )
-              const writeIn = {
-                id: 'writeIn',
-                name: 'Write-In',
-                partyId: ''
-              }
-              const candidates = [
-                ...contestCandidates,
-                writeIn,
-              ]
-              return (
-                <Contest key={contestId}>
-                  <Row>
+      {currentPage === 'results' && (
+        <React.Fragment>
+
+          <Container>
+            <PageHeader>
+              <Actions>
+                <Button onClick={() => {window.print()}}>Print Results</Button>
+              </Actions>
+              <Headline>
+                {results.isOfficial ? 'Offical Results':'Unoffical Results'}
+              </Headline>
+              <LastUpdated>
+                Results last updated at{' '}
+                {localeLongDateAndTime.format(results.lastUpdatedDate)}.{' '}
+                Official results will be finalized when the election is certified on DATE.
+              </LastUpdated>
+              <ElectionTitle>{election.title}</ElectionTitle>
+              <ElectionDate>
+                <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
+                <NoWrap>Vote from 7am – 7pm.</NoWrap>
+              </ElectionDate>
+              <DataPoint>
+                <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
+                <NoWrap>{results.registeredVoterCount} registered voters /</NoWrap>{' '}
+                <NoWrap>
+                  {
+                    results.isOfficial
+                      ? `${totalBallotsCounted} ballots counted`
+                      : `${totalBallotsCounted} ballots counted thus far`
+                  }
+                </NoWrap>
+              </DataPoint>
+            </PageHeader>
+          </Container>
+          <Container>
+            <Contests>
+              {election.contests.map(
+                ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
+                  const contestVotes = sumCandidateVotes(
+                    results.contests[contestId].candidates
+                  )
+                  const writeIn = {
+                    id: 'writeIn',
+                    name: 'Write-In',
+                    partyId: ''
+                  }
+                  const candidates = [
+                    ...contestCandidates,
+                    writeIn,
+                  ]
+                  return (
+                    <Contest key={contestId}>
+                      <Row>
+                        <div>
+                          <ContestSection>{section}</ContestSection>
+                          <ContestTitle>{title}</ContestTitle>
+                        </div>
+                        <CandidateDataColumn>
+                          <CandidateDetail>
+                            {seats} winner
+                          </CandidateDetail>
+                        </CandidateDataColumn>
+                      </Row>
+                      <div>
+                        {candidates
+                          .sort((a, b) =>
+                            results.contests[contestId].candidates[b.id]
+                            - results.contests[contestId].candidates[a.id]
+                          )
+                          .map(({ id: candidateId, name, partyId }) => {
+                          const candidateVotes =
+                            results.contests[contestId].candidates[candidateId]
+                          return (
+                            <Candidate key={candidateId}>
+                              <CandidateProgressBar>
+                                <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
+                              </CandidateProgressBar>
+                              <CandidateRow data-percentage="50%">
+                                <CandidateDataColumn>
+                                  <CandidateMain as="h3">{name}</CandidateMain>
+                                  <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
+                                </CandidateDataColumn>
+                                <CandidateDataColumn>
+                                  <CandidateMain>
+                                    {formatPercentage(candidateVotes, contestVotes)}
+                                  </CandidateMain>
+                                  <CandidateDetail>{candidateVotes} votes</CandidateDetail>
+                                </CandidateDataColumn>
+                              </CandidateRow>
+                            </Candidate>
+                          )
+                        })}
+                      </div>
+                    </Contest>
+                  )
+                }
+              )}
+            </Contests>
+          </Container>
+          <Container>
+            <Refresh>This data will automatically update every 1 minute.</Refresh>
+          </Container>
+        </React.Fragment>
+      )}
+      {currentPage === 'info' && (
+        <React.Fragment>
+          <Container>
+            <PageHeader>
+              <Headline>
+                Voting Info
+              </Headline>
+              <ElectionTitle>{election.title}</ElectionTitle>
+              <ElectionDate>
+                <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
+                <NoWrap>Vote from 7am – 7pm.</NoWrap>
+              </ElectionDate>
+              <PrecinctsHeading>Local Precincts</PrecinctsHeading>
+              <PrecinctsList>
+                {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
+                  <Precinct>
+                    <h3>{name}</h3>
+                    <PrecinctAddress>{address || <em>no address provided</em>}</PrecinctAddress>
                     <div>
-                      <ContestSection>{section}</ContestSection>
-                      <ContestTitle>{title}</ContestTitle>
+                      {
+                        election.ballotStyles
+                          .filter((bs) => bs.precincts.includes(precinctId))
+                          .map((bs) => (
+                            <Button as="a" href={`sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>Sample Ballot - Style {bs.id}</Button>
+                          ))
+                      }
                     </div>
-                    <CandidateDataColumn>
-                      <CandidateDetail>
-                        {seats} winner
-                      </CandidateDetail>
-                    </CandidateDataColumn>
-                  </Row>
-                  <div>
-                    {candidates
-                      .sort((a, b) =>
-                        results.contests[contestId].candidates[b.id]
-                        - results.contests[contestId].candidates[a.id]
-                      )
-                      .map(({ id: candidateId, name, partyId }) => {
-                      const candidateVotes =
-                        results.contests[contestId].candidates[candidateId]
-                      return (
-                        <Candidate key={candidateId}>
-                          <CandidateProgressBar>
-                            <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
-                          </CandidateProgressBar>
-                          <CandidateRow data-percentage="50%">
-                            <CandidateDataColumn>
-                              <CandidateMain as="h3">{name}</CandidateMain>
-                              <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
-                            </CandidateDataColumn>
-                            <CandidateDataColumn>
-                              <CandidateMain>
-                                {formatPercentage(candidateVotes, contestVotes)}
-                              </CandidateMain>
-                              <CandidateDetail>{candidateVotes} votes</CandidateDetail>
-                            </CandidateDataColumn>
-                          </CandidateRow>
-                        </Candidate>
-                      )
-                    })}
-                  </div>
-                </Contest>
-              )
-            }
-          )}
-        </Contests>
-      </Container>
-      <Container>
-        <Refresh>This page will automatically refresh every 1 minute.</Refresh>
-      </Container>
+                  </Precinct>
+                ))}
+              </PrecinctsList>
+            </PageHeader>
+          </Container>
+        </React.Fragment>
+      )}
     </div>
   )
 }

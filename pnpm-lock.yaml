@@ -4,6 +4,7 @@ specifiers:
   '@testing-library/jest-dom': ^4.2.4
   '@testing-library/react': ^9.3.2
   '@testing-library/user-event': ^7.1.2
+  '@types/dashify': ^1.0.0
   '@types/jest': ^24.0.0
   '@types/node': ^12.0.0
   '@types/react': ^16.9.0
@@ -11,6 +12,7 @@ specifiers:
   '@types/styled-components': ^5.1.3
   '@typescript-eslint/eslint-plugin': ^4.1.0
   '@typescript-eslint/parser': ^4.1.0
+  dashify: ^2.0.0
   eslint-config-airbnb-typescript: ^10.0.0
   eslint-config-prettier: ^6.11.0
   eslint-plugin-jest: ^24.0.0
@@ -33,11 +35,13 @@ dependencies:
   '@testing-library/jest-dom': 4.2.4
   '@testing-library/react': 9.5.0_react-dom@16.14.0+react@16.14.0
   '@testing-library/user-event': 7.2.1
+  '@types/dashify': 1.0.0
   '@types/jest': 24.9.1
   '@types/node': 12.20.13
   '@types/react': 16.14.7
   '@types/react-dom': 16.9.13
   '@types/styled-components': 5.1.9
+  dashify: 2.0.0
   react: 16.14.0
   react-dom: 16.14.0_react@16.14.0
   react-scripts: 3.4.3_typescript@3.7.7
@@ -1932,6 +1936,10 @@ packages:
     resolution: {integrity: sha512-Vs0hm0vPahPMYi9tDjtP66llufgO3ST16WXaSTtDGEl9cewAl3AibmxWw6TINOqHPT9z0uABKAYjT9jNSg4npw==}
     dependencies:
       '@babel/types': 7.14.2
+    dev: false
+
+  /@types/dashify/1.0.0:
+    resolution: {integrity: sha512-uyYom3SM48jvowobcby+1z3r/sDX+5N8lAdPoNLKYMhF819pNjV6K5g8lAUGrwj80n+P7Qf10GcA9h7aIO2GJw==}
     dev: false
 
   /@types/eslint-visitor-keys/1.0.0:
@@ -4148,6 +4156,11 @@ packages:
     engines: {node: '>=0.10'}
     dependencies:
       assert-plus: 1.0.0
+    dev: false
+
+  /dashify/2.0.0:
+    resolution: {integrity: sha512-hpA5C/YrPjucXypHPPc0oJ1l9Hf6wWbiOL7Ik42cxnsUOhWiCB/fylKbKqqJalW9FgkNQCw16YO8uW9Hs0Iy1A==}
+    engines: {node: '>=4'}
     dev: false
 
   /data-urls/1.1.0:
