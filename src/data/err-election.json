@@ -191,12 +191,12 @@
     {
       "id": "575001077",
       "name": "American Legion",
-      "address": ""
+      "address": "1712 Monroe Street, Vicksburg, MS 39180"
     },
     {
       "id": "575001078",
       "name": "No. 5 Fire Station",
-      "address": ""
+      "address": "5885 Highway 61 South, Vicksburg, MS 39180"
     },
     {
       "id": "575001079",
@@ -241,7 +241,7 @@
     {
       "id": "575001087",
       "name": "First Baptist Church",
-      "address": ""
+      "address": "1607 Cherry St, Vicksburg, MS 39180"
     }
   ],
   "ballotStyles": [

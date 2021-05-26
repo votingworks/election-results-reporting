@@ -94,6 +94,9 @@ const NavHeader = styled.div`
   @media print, (min-width: 568px) {
     font-size: 1.5rem;
   }
+  @media print {
+    color: #000000;
+  }
 `
 
 const ElectionDate = styled.div`
@@ -238,6 +241,9 @@ const CandidateProgressBar = styled.div`
   & > div {
     height: 4px;
     background: #ffc55d;
+    @media print {
+      background: #000000;
+    }
   }
 `
 
@@ -269,27 +275,15 @@ const Refresh = styled.div`
   @media (min-width: 568px) {
     padding: 1.25rem 1rem 1rem;
   }
-  @media print, (min-width: ${1200 + (2 * 16)}px) {
+  @media (min-width: ${1200 + (2 * 16)}px) {
     padding-right: 0;
     padding-left: 0;
   }
-`
-
-const ProgressBar = styled.div`
-  position: relative;
-  overflow: hidden;
-  height: 3px;
-  background: #336733;
-  & > div {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100%;
-    height: 3px;
-    background: #ffc55d;
-    transition: transform 1s linear;
+  @media print {
+    display: none;
   }
 `
+
 const PrecinctsHeading = styled.h2`
   margin: 1rem 0 0.5rem;
 `
@@ -303,12 +297,31 @@ const PrecinctsList = styled.div`
   }
 `
 const Precinct = styled.div`
-  margin-bottom: 1.5rem;
+  margin-bottom: 3rem;
   break-inside: avoid;
 `
 const PrecinctAddress = styled.div`
   margin-bottom: 0.25rem;
-  font-size: 0.9rem;
+  &::before {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.25rem;
+    background: bottom center url('${process.env.PUBLIC_URL}/icons/map-marker-regular.svg') no-repeat;
+    content: '';
+    vertical-align: text-bottom;
+  }
+`
+const SampleBallots = styled.div`
+  &::before {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.25rem;
+    background: bottom center url('${process.env.PUBLIC_URL}/icons/ballot-check-regular.svg') no-repeat;
+    content: '';
+    vertical-align: text-bottom;
+  }
 `
 
 const formatPercentage = (a: number, b: number): string =>
@@ -320,6 +333,10 @@ const sumCandidateVotes = (candidates: ResultsCandidates): number =>
 const totalBallotsCounted = election.contests.reduce((prev, curr) =>
   prev + sumCandidateVotes(results.contests[curr.id].candidates), 0)
 
+const printPage = () => {
+  console.log('printPage')
+  window.print()
+}
 const refreshInterval = 60
 const App: React.FC = () => {
   const [ refreshCountdown, setRefreshCountdown ] = useState(refreshInterval)
@@ -333,16 +350,10 @@ const App: React.FC = () => {
     return () => clearTimeout(timer)
   })
 
-  const [ currentPage, setCurrentPage ] = useState('results')
+  const [ currentPage, setCurrentPage ] = useState('info')
 
   return (
     <div>
-      <ProgressBar>
-        <div style={{
-          transform: `translateX(${100 - (refreshCountdown / refreshInterval * 100)}%)`,
-          transition: refreshCountdown === refreshInterval ? 'none' : undefined,
-        }} />
-      </ProgressBar>
       <NavigationBanner>
         <Container>
           <Navigation>
@@ -368,7 +379,7 @@ const App: React.FC = () => {
           <Container>
             <PageHeader>
               <Actions>
-                <Button onClick={() => {window.print()}}>Print Results</Button>
+                <Button onClick={printPage}>Print Results</Button>
               </Actions>
               <Headline>
                 {results.isOfficial ? 'Offical Results':'Unoffical Results'}
@@ -483,16 +494,24 @@ const App: React.FC = () => {
                 {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
                   <Precinct>
                     <h3>{name}</h3>
-                    <PrecinctAddress>{address || <em>no address provided</em>}</PrecinctAddress>
-                    <div>
+                    <PrecinctAddress>
+                      {address ? (
+                        <a href={`https://maps.google.com/?q=${address}`}>
+                          {address.split(',')[0]}
+                        </a>
+                      ) : (
+                        <em>no address provided</em>
+                      )}
+                    </PrecinctAddress>
+                    <SampleBallots>
                       {
                         election.ballotStyles
                           .filter((bs) => bs.precincts.includes(precinctId))
                           .map((bs) => (
-                            <Button as="a" href={`sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>Sample Ballot - Style {bs.id}</Button>
+                            <a href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
                           ))
                       }
-                    </div>
+                    </SampleBallots>
                   </Precinct>
                 ))}
               </PrecinctsList>
