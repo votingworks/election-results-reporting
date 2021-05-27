@@ -346,7 +346,7 @@ const App: React.FC = () => {
           <Navigation>
             <Brand>
               <SealImg
-                src={`/election-results-reporting${election.sealURL}`}
+                src={election.sealURL}
                 alt="seal"
               />
             </Brand>
