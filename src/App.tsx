@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import dashify from 'dashify'
 import styled from 'styled-components'
@@ -11,39 +11,8 @@ import {
 
 import election from './data/err-election.json'
 
-// TODO: Use external results when types are simpler.
-// import electionResults from './data/electionResults.json'
 const now = new Date()
-const results: Results = {
-  isOfficial: false,
-  lastUpdatedDate: new Date(now.setMinutes(now.getMinutes() - 30)),
-  registeredVoterCount: 2593,
-  ballotsReceived: 327,
-  ballotsCounted: 87,
-  contests: {
-    '775023387': {
-      candidates: {
-        '775033907': 248,
-        '775036124': 427,
-        '775036125': 120,
-        'writeIn': 7,
-      },
-    },
-    '775023385': {
-      candidates: {
-        '775033203': 447,
-        'writeIn': 22,
-      },
-    },
-    '775023386': {
-      candidates: {
-        '775033204': 322,
-        '775036126': 325,
-        'writeIn': 14,
-      },
-    },
-  },
-}
+const certificationDate = new Date(now.setDate(now.getDate() + 14))
 
 const NoWrap = styled.span`
   white-space: nowrap;
@@ -325,32 +294,65 @@ const SampleBallots = styled.div`
 `
 
 const formatPercentage = (a: number, b: number): string =>
-  `${(Math.round((a / b) * 10000) / 100).toFixed(2)}%`
+  {
+    if (a === 0) {
+      return '0%'
+    }
+    if (a === b) {
+      return '100%'
+    }
+    const quotient = b === 0 ? 0 : a / b
+    return `${(Math.round(quotient * 10000) / 100).toFixed(2)}%`
+  }
 const getPartyById = (id: string) =>
   election.parties.find((party) => party.id === id)
 const sumCandidateVotes = (candidates: ResultsCandidates): number =>
   Object.keys(candidates).reduce((sum, key) => sum + candidates[key], 0)
-const totalBallotsCounted = election.contests.reduce((prev, curr) =>
-  prev + sumCandidateVotes(results.contests[curr.id].candidates), 0)
 
-const printPage = () => {
-  console.log('printPage')
-  window.print()
-}
+// pre-election || during-election || post-election
 const refreshInterval = 60
 const App: React.FC = () => {
-  const [ refreshCountdown, setRefreshCountdown ] = useState(refreshInterval)
-  if (refreshCountdown === 0) {
-    console.log('Fetching new data!')
+  // const [ electionState, setElectionState ] = useState('pre-election')
+  const [ results, setResults ] = useState<Results | undefined>(undefined)
+  const [ refreshCountdown, setRefreshCountdown ] = useState(0)
+
+  const getTotalBallotsCounted = useCallback<() => number>(() => results
+    ? election.contests.reduce((prev, curr) =>
+      prev + sumCandidateVotes(results.contests[curr.id].candidates), 0)
+    : 0, [results])
+
+  const totalBallotsCounted = getTotalBallotsCounted()
+  const hasResults = totalBallotsCounted > 0
+  const [ currentPage, setCurrentPage ] = useState(hasResults ? 'results' : 'info')
+
+  const fetchResults = async () => {
+    const response = await fetch("https://err-backend-worker.votingworks.workers.dev/warren")
+    if (response.status >= 200 && response.status <= 299) {
+      const jsonResponse: Results = await response.json()
+      if (Object.keys(jsonResponse).length !== 0) {
+        setResults(jsonResponse)
+      }
+    } else {
+      console.log(response.status, response.statusText);
+    }
   }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
+      // setElectionState('pre-election') // TODO
+      if (refreshCountdown === 0) {
+        fetchResults()
+      }
     }, 1000);
     return () => clearTimeout(timer)
   })
 
-  const [ currentPage, setCurrentPage ] = useState('info')
+  useEffect(() => {
+    if (getTotalBallotsCounted() > 0) {
+      setCurrentPage('results')
+    }
+  }, [results, getTotalBallotsCounted])
 
   return (
     <div>
@@ -373,38 +375,50 @@ const App: React.FC = () => {
           </Navigation>
         </Container>
       </NavigationBanner>
-      {currentPage === 'results' && (
+      {currentPage === 'results' && !results && (
+        <Container>
+          <Refresh>Loading results…</Refresh>
+        </Container>
+      )}
+      {currentPage === 'results' && results && (
         <React.Fragment>
-
           <Container>
             <PageHeader>
-              <Actions>
-                <Button onClick={printPage}>Print Results</Button>
-              </Actions>
+              {hasResults && (
+                <Actions>
+                  <Button onClick={window.print}>Print Results</Button>
+                </Actions>
+              )}
               <Headline>
-                {results.isOfficial ? 'Offical Results':'Unoffical Results'}
+                {results?.isOfficial ? 'Offical Results':'Unoffical Results'}
               </Headline>
               <LastUpdated>
                 Results last updated at{' '}
-                {localeLongDateAndTime.format(results.lastUpdatedDate)}.{' '}
-                Official results will be finalized when the election is certified on DATE.
+                <NoWrap>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</NoWrap>.{' '}
+                Official results will be finalized when the election is certified on{' '}
+                <NoWrap>{localeLongDateAndTime.format(new Date(certificationDate))}</NoWrap>.
               </LastUpdated>
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
-                <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
-                <NoWrap>Vote from 7am – 7pm.</NoWrap>
+                <NoWrap>{localeWeekdayAndDate.format(new Date(election.date))}</NoWrap>
               </ElectionDate>
-              <DataPoint>
-                <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
-                <NoWrap>{results.registeredVoterCount} registered voters /</NoWrap>{' '}
-                <NoWrap>
-                  {
-                    results.isOfficial
-                      ? `${totalBallotsCounted} ballots counted`
-                      : `${totalBallotsCounted} ballots counted thus far`
-                  }
-                </NoWrap>
-              </DataPoint>
+              {hasResults ? (
+                <DataPoint>
+                  <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
+                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
+                  <NoWrap>
+                    {
+                      results.isOfficial
+                        ? `${totalBallotsCounted.toLocaleString()} ballots counted`
+                        : `${totalBallotsCounted.toLocaleString()} ballots counted thus far`
+                    }
+                  </NoWrap>
+                </DataPoint>
+              ) : (
+                <DataPoint>
+                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
+                </DataPoint>
+              )}
             </PageHeader>
           </Container>
           <Container>
@@ -487,12 +501,12 @@ const App: React.FC = () => {
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
                 <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
-                <NoWrap>Vote from 7am – 7pm.</NoWrap>
+                <NoWrap>Polls are open 7am – 7pm.</NoWrap>
               </ElectionDate>
               <PrecinctsHeading>Local Precincts</PrecinctsHeading>
               <PrecinctsList>
                 {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
-                  <Precinct>
+                  <Precinct key={precinctId}>
                     <h3>{name}</h3>
                     <PrecinctAddress>
                       {address ? (
@@ -508,7 +522,7 @@ const App: React.FC = () => {
                         election.ballotStyles
                           .filter((bs) => bs.precincts.includes(precinctId))
                           .map((bs) => (
-                            <a href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
+                            <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
                           ))
                       }
                     </SampleBallots>
