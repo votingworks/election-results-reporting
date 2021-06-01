@@ -328,6 +328,12 @@ const App: React.FC = () => {
     }
   }
 
+  // Init Results
+  useEffect(() => {
+    fetchResults()
+  }, [])
+
+  // Refresh Results
   useEffect(() => {
     const timer = setTimeout(() => {
       setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
