@@ -317,7 +317,7 @@ const App: React.FC = () => {
   const [ currentPage, setCurrentPage ] = useState(hasResults ? 'results' : 'info')
 
   const fetchResults = async () => {
-    const response = await fetch("https://err-backend-worker.votingworks.workers.dev/warren")
+    const response = await fetch(process.env.REACT_APP_API || "https://err-backend-worker.votingworks.workers.dev/warren")
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: Results = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
