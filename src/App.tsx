@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './App.css'
 import dashify from 'dashify'
 import styled from 'styled-components'
@@ -10,9 +10,6 @@ import {
 } from './utils/IntlDateTimeFormats'
 
 import election from './data/err-election.json'
-
-const now = new Date()
-const certificationDate = new Date(now.setDate(now.getDate() + 14))
 
 const NoWrap = styled.span`
   white-space: nowrap;
@@ -316,13 +313,7 @@ const App: React.FC = () => {
   const [ results, setResults ] = useState<Results | undefined>(undefined)
   const [ refreshCountdown, setRefreshCountdown ] = useState(0)
 
-  const getTotalBallotsCounted = useCallback<() => number>(() => results
-    ? election.contests.reduce((prev, curr) =>
-      prev + sumCandidateVotes(results.contests[curr.id].candidates), 0)
-    : 0, [results])
-
-  const totalBallotsCounted = getTotalBallotsCounted()
-  const hasResults = totalBallotsCounted > 0
+  const hasResults = !!results?.ballotsCounted
   const [ currentPage, setCurrentPage ] = useState(hasResults ? 'results' : 'info')
 
   const fetchResults = async () => {
@@ -344,15 +335,9 @@ const App: React.FC = () => {
       if (refreshCountdown === 0) {
         fetchResults()
       }
-    }, 1000);
+    }, refreshInterval * 1000);
     return () => clearTimeout(timer)
   })
-
-  useEffect(() => {
-    if (getTotalBallotsCounted() > 0) {
-      setCurrentPage('results')
-    }
-  }, [results, getTotalBallotsCounted])
 
   return (
     <div>
@@ -396,7 +381,7 @@ const App: React.FC = () => {
                 Results last updated at{' '}
                 <NoWrap>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</NoWrap>.{' '}
                 Official results will be finalized when the election is certified on{' '}
-                <NoWrap>{localeLongDateAndTime.format(new Date(certificationDate))}</NoWrap>.
+                <NoWrap>{localeWeekdayAndDate.format(new Date(results.certificationDate))}</NoWrap>.
               </LastUpdated>
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
@@ -404,13 +389,13 @@ const App: React.FC = () => {
               </ElectionDate>
               {hasResults ? (
                 <DataPoint>
-                  <NoWrap>{formatPercentage(totalBallotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
+                  <NoWrap>{formatPercentage(results.ballotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
                   <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
                   <NoWrap>
                     {
                       results.isOfficial
-                        ? `${totalBallotsCounted.toLocaleString()} ballots counted`
-                        : `${totalBallotsCounted.toLocaleString()} ballots counted thus far`
+                        ? `${results.ballotsCounted.toLocaleString()} ballots counted`
+                        : `${results.ballotsCounted.toLocaleString()} ballots counted thus far`
                     }
                   </NoWrap>
                 </DataPoint>

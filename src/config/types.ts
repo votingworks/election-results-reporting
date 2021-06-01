@@ -9,10 +9,11 @@ export interface ResultsContest {
 }
 
 export interface Results {
+  ballotsCounted: number
+  ballotsReceived: number
+  certificationDate: Date
+  contests: Dictionary<ResultsContest>
   isOfficial: boolean
   lastUpdatedDate: Date
   registeredVoterCount: number
-  ballotsReceived: number
-  ballotsCounted: number
-  contests: Dictionary<ResultsContest>
 }
