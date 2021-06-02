@@ -111,6 +111,18 @@ const Headline = styled.h1`
 const LastUpdated = styled.p`
   font-size: 0.9rem;
 `
+
+const ResultsBanner = styled.p`
+    padding: 1rem;
+    border: 3px solid #ffaa13;
+    margin-top: 1rem;
+    background: #ffc55d;
+    border-radius: 0.3rem;
+    color: #003334;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+  `
 const ElectionTitle = styled.h2`
   margin-top: 0.5rem;
   font-size: 1.5rem;
@@ -305,11 +317,27 @@ const getPartyById = (id: string) =>
   election.parties.find((party) => party.id === id)
 const sumCandidateVotes = (candidates: ResultsCandidates): number =>
   Object.keys(candidates).reduce((sum, key) => sum + candidates[key], 0)
+const datesAreOnSameDay = (first: Date, second: Date): boolean =>
+  first.getFullYear() === second.getFullYear() &&
+  first.getMonth() === second.getMonth() &&
+  first.getDate() === second.getDate();
 
 // pre-election || during-election || post-election
 const refreshInterval = 60
 const App: React.FC = () => {
-  // const [ electionState, setElectionState ] = useState('pre-election')
+
+  const getElectionStatus = () => {
+    const now = new Date()
+    if (now <= new Date(election.polls.openAt)) {
+      return 'pre-election'
+    }
+    if (now >= new Date(election.polls.closeAt)) {
+      return 'post-election'
+    }
+    return 'during-election'
+  }
+  const isElectionDay = datesAreOnSameDay(new Date(), new Date(election.date))
+  const [ electionStatus, setElectionStatus ] = useState(getElectionStatus)
   const [ results, setResults ] = useState<Results | undefined>(undefined)
   const [ refreshCountdown, setRefreshCountdown ] = useState(0)
 
@@ -328,6 +356,17 @@ const App: React.FC = () => {
     }
   }
 
+  const electionDayPhrase = isElectionDay
+    ? 'Election Day is today.'
+    : electionStatus === 'post-election'
+      ? `Election Day was ${localeWeekdayAndDate.format(new Date(election.date))}.`
+      : `Election Day is ${localeWeekdayAndDate.format(new Date(election.date))}.`
+
+  const pollsOpenPhrase = electionStatus === "post-election"
+  ? 'Polls are closed.'
+  : 'Polls are open 7am – 7pm.'
+
+
   // Init Results
   useEffect(() => {
     fetchResults()
@@ -337,7 +376,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
-      // setElectionState('pre-election') // TODO
+      setElectionStatus(getElectionStatus)
       if (refreshCountdown === 0) {
         fetchResults()
       }
@@ -357,7 +396,7 @@ const App: React.FC = () => {
               />
             </Brand>
             <NavigationContent>
-              <NavHeader>{election.county.name}, {election.state}</NavHeader>
+              <NavHeader>City of Vicksburg, {election.state}</NavHeader>
               <NavTabs>
                 <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
                 <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
@@ -384,14 +423,18 @@ const App: React.FC = () => {
                 {results?.isOfficial ? 'Offical Results':'Unoffical Results'}
               </Headline>
               <LastUpdated>
-                Results last updated at{' '}
-                <NoWrap>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</NoWrap>.{' '}
-                Official results will be finalized when the election is certified on{' '}
+                Results last updated on{' '}
+                <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
+                This page will automatically refresh when new results are available.
+              </LastUpdated>
+              <LastUpdated>
+              Official results will be finalized when the election is certified on{' '}
                 <NoWrap>{localeWeekdayAndDate.format(new Date(results.certificationDate))}</NoWrap>.
               </LastUpdated>
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
-                <NoWrap>{localeWeekdayAndDate.format(new Date(election.date))}</NoWrap>
+                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
+                <NoWrap>{pollsOpenPhrase}</NoWrap>
               </ElectionDate>
               {hasResults ? (
                 <DataPoint>
@@ -410,6 +453,9 @@ const App: React.FC = () => {
                   <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
                 </DataPoint>
               )}
+              <ResultsBanner>
+                Election results data will become available after polls close.
+              </ResultsBanner>
             </PageHeader>
           </Container>
           <Container>
@@ -478,7 +524,7 @@ const App: React.FC = () => {
             </Contests>
           </Container>
           <Container>
-            <Refresh>This data will automatically update every 1 minute.</Refresh>
+            <Refresh>This page will automatically refresh when new results are available.</Refresh>
           </Container>
         </React.Fragment>
       )}
@@ -491,8 +537,8 @@ const App: React.FC = () => {
               </Headline>
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
-                <NoWrap>Election Day is {localeWeekdayAndDate.format(new Date(election.date))}.</NoWrap>{' '}
-                <NoWrap>Polls are open 7am – 7pm.</NoWrap>
+                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
+                <NoWrap>{pollsOpenPhrase}</NoWrap>
               </ElectionDate>
               <PrecinctsHeading>Local Precincts</PrecinctsHeading>
               <PrecinctsList>
