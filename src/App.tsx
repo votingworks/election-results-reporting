@@ -365,9 +365,13 @@ const App: React.FC = () => {
       : `Election Day is ${localeWeekdayAndDate.format(new Date(election.date))}.`
 
   const pollsOpenPhrase = electionStatus === "post-election"
-  ? 'Polls are closed.'
-  : 'Polls are open 7am – 7pm.'
+    ? 'Polls are closed.'
+    : 'Polls are open 7am – 7pm.'
 
+  // Certification date is in YYYY-MM-DD format. Update to JS date with proper timezone.
+  const electionTimezoneOffset = new Date(election.date).getTimezoneOffset()
+  const resultsCertificationDate = results?.certificationDate && new Date(results.certificationDate)
+  const certificationDate = resultsCertificationDate && resultsCertificationDate.setMinutes(resultsCertificationDate.getMinutes() + electionTimezoneOffset)
 
   // Init Results
   useEffect(() => {
@@ -431,7 +435,7 @@ const App: React.FC = () => {
               </LastUpdated>
               <LastUpdated>
               Official results will be finalized when the election is certified on{' '}
-                <NoWrap>{localeWeekdayAndDate.format(new Date(results.certificationDate))}</NoWrap>.
+                <NoWrap>{localeWeekdayAndDate.format(certificationDate)}</NoWrap>.
               </LastUpdated>
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
