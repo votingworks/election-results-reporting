@@ -246,10 +246,11 @@ const CandidateDetail = styled.div`
   white-space: nowrap;
 `
 
-const Refresh = styled.div`
+const Refresh = styled.p`
   padding: 0.5rem;
-  margin: 0 0 4rem;
+  margin-bottom: 1rem;
   font-size: 0.9rem;
+  line-height: 1.25;
   text-align: center;
   @media (min-width: 568px) {
     padding: 1.25rem 1rem 1rem;
@@ -291,7 +292,7 @@ const PrecinctsList = styled.div`
 `
 const Precinct = styled.div`
   flex: 1;
-  padding: 1rem 1rem 0.75rem;
+  padding: 1rem;
   background: #ffffff;
   box-shadow: 0 1px 4px #666666;
   break-inside: avoid;
@@ -303,7 +304,9 @@ const Precinct = styled.div`
     box-shadow: none;
   }
 `
-
+const PrecinctName = styled.h3`
+  margin-bottom: 0.25rem;
+`
 const PrecinctAddress = styled.div`
   margin-bottom: 0.25rem;
   &::before {
@@ -326,6 +329,26 @@ const SampleBallots = styled.div`
     content: '';
     vertical-align: text-bottom;
   }
+`
+const PoweredByVotingWorks = styled.p`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 5rem 0;
+  color: inherit;
+  font-size: 1rem;
+  text-align: center;
+  text-decoration: none;
+`
+const VotingWorksWordmark = styled.span`
+  display: inline-block;
+  overflow: hidden;
+  width: 170px;
+  height: 40px;
+  margin-left: 0.5rem;
+  background: bottom center url('${process.env.PUBLIC_URL}/votingworks-wordmark-purple.svg') no-repeat;
+  text-indent: 100%;
+  vertical-align: middle;
 `
 
 const formatPercentage = (a: number, b: number): string =>
@@ -414,6 +437,12 @@ const App: React.FC = () => {
     return () => clearTimeout(timer)
   })
 
+  const PoweredBy = () => (
+    <Container>
+      <PoweredByVotingWorks as="a" href="https://voting.works/">Powered by <VotingWorksWordmark>VotingWorks</VotingWorksWordmark></PoweredByVotingWorks>
+    </Container>
+  )
+
   return (
     <div>
       <NavigationBanner>
@@ -455,7 +484,7 @@ const App: React.FC = () => {
               <LastUpdated>
                 Results last updated on{' '}
                 <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
-                This page will automatically refresh when new results are available.
+                This page will automatically refresh when new results data are available.
               </LastUpdated>
               <LastUpdated>
               Official results will be finalized when the election is certified on{' '}
@@ -554,8 +583,9 @@ const App: React.FC = () => {
             </Contests>
           </Container>
           <Container>
-            <Refresh>This page will automatically refresh when new results are available.</Refresh>
+            <Refresh>This page will automatically refresh when new results data are available.</Refresh>
           </Container>
+          <PoweredBy />
         </React.Fragment>
       )}
       {currentPage === 'info' && (
@@ -575,7 +605,7 @@ const App: React.FC = () => {
             <PrecinctsList>
               {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
                 <Precinct key={precinctId}>
-                  <h3>{name}</h3>
+                  <PrecinctName>{name}</PrecinctName>
                   <PrecinctAddress>
                     {address ? (
                       <a href={`https://maps.google.com/?q=${address}`}>
@@ -598,6 +628,7 @@ const App: React.FC = () => {
               ))}
             </PrecinctsList>
           </Container>
+          <PoweredBy />
         </React.Fragment>
       )}
     </div>
