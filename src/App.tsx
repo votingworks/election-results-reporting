@@ -65,7 +65,8 @@ const NavHeader = styled.div`
   }
 `
 
-const ElectionDate = styled.div`
+const ElectionDate = styled.p`
+  margin-bottom: 1rem;
   font-size: 0.9rem;
   @media print, (min-width: 568px) {
     font-size: 1rem;
@@ -263,9 +264,10 @@ const Refresh = styled.div`
 `
 
 const PrecinctsHeading = styled.h2`
-  margin: 1rem 0 0.5rem;
+  margin: 1rem 0 0;
 `
 const PrecinctsList = styled.div`
+  margin-top: 1.5rem;
   column-gap: 1rem;
   @media (min-width: 568px) {
     columns: 2;
@@ -538,9 +540,12 @@ const App: React.FC = () => {
               <ElectionTitle>{election.title}</ElectionTitle>
               <ElectionDate>
                 <NoWrap>{electionDayPhrase}</NoWrap>{' '}
-                <NoWrap>{pollsOpenPhrase}</NoWrap>
+                <NoWrap>{pollsOpenPhrase}</NoWrap>{' '}
               </ElectionDate>
               <PrecinctsHeading>Local Precincts</PrecinctsHeading>
+              <ElectionDate>
+                If you don’t know your polling place, please call the City of Vicksburg’s City Clerk’s Office at <NoWrap as="a" href="tel:+16016344553">601-634-4553</NoWrap>.
+              </ElectionDate>
               <PrecinctsList>
                 {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
                   <Precinct key={precinctId}>
