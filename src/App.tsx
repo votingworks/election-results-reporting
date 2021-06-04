@@ -156,8 +156,8 @@ const Button = styled.button`
 const Contests = styled.div`
   display: grid;
   margin-bottom: 1rem;
-  grid-column-gap: 16px;
-  grid-row-gap: 16px;
+  grid-column-gap: 1rem;
+  grid-row-gap: 1rem;
   grid-template-columns: repeat(1, 1fr);
   @media print {
     grid-template-columns: repeat(2, 1fr);
@@ -267,19 +267,43 @@ const PrecinctsHeading = styled.h2`
   margin: 1rem 0 0;
 `
 const PrecinctsList = styled.div`
-  margin-top: 1.5rem;
-  column-gap: 1rem;
+  display: grid;
+  margin-bottom: 1rem;
+  grid-column-gap: 1rem;
+  grid-row-gap: 1rem;
+  grid-template-columns: repeat(1, 1fr);
+  @media print {
+    grid-template-columns: repeat(2, 1fr);
+  }
   @media (min-width: 568px) {
-    columns: 2;
+    margin-right: 1rem;
+    margin-left: 1rem;
+    grid-template-columns: repeat(2, 1fr);
   }
   @media (min-width: 768px) {
-    columns: 3;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (min-width: ${1200 + (2 * 16)}px) {
+    margin-right: 0;
+    margin-left: 0;
+    grid-template-columns: repeat(4, 1fr);
   }
 `
 const Precinct = styled.div`
-  margin-bottom: 3rem;
+  flex: 1;
+  padding: 1rem 1rem 0.75rem;
+  background: #ffffff;
+  box-shadow: 0 1px 4px #666666;
   break-inside: avoid;
+  @media (min-width: 568px) {
+    border-radius: 0.3rem;
+  }
+  @media print {
+    border: 1px solid #000000;
+    box-shadow: none;
+  }
 `
+
 const PrecinctAddress = styled.div`
   margin-bottom: 0.25rem;
   &::before {
@@ -538,10 +562,7 @@ const App: React.FC = () => {
         <React.Fragment>
           <Container>
             <PageHeader>
-              <Headline>
-                Voting Info
-              </Headline>
-              <ElectionTitle>{election.title}</ElectionTitle>
+              <ElectionTitle as="h1">{election.title}</ElectionTitle>
               <ElectionDate>
                 <NoWrap>{electionDayPhrase}</NoWrap>{' '}
                 <NoWrap>{pollsOpenPhrase}</NoWrap>{' '}
@@ -550,32 +571,32 @@ const App: React.FC = () => {
               <ElectionDate>
                 If you don’t know your polling place, please call the City of Vicksburg’s City Clerk’s Office at <NoWrap as="a" href="tel:+16016344553">601-634-4553</NoWrap>.
               </ElectionDate>
-              <PrecinctsList>
-                {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
-                  <Precinct key={precinctId}>
-                    <h3>{name}</h3>
-                    <PrecinctAddress>
-                      {address ? (
-                        <a href={`https://maps.google.com/?q=${address}`}>
-                          {address.split(',')[0]}
-                        </a>
-                      ) : (
-                        <em>no address provided</em>
-                      )}
-                    </PrecinctAddress>
-                    <SampleBallots>
-                      {
-                        election.ballotStyles
-                          .filter((bs) => bs.precincts.includes(precinctId))
-                          .map((bs) => (
-                            <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
-                          ))
-                      }
-                    </SampleBallots>
-                  </Precinct>
-                ))}
-              </PrecinctsList>
             </PageHeader>
+            <PrecinctsList>
+              {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
+                <Precinct key={precinctId}>
+                  <h3>{name}</h3>
+                  <PrecinctAddress>
+                    {address ? (
+                      <a href={`https://maps.google.com/?q=${address}`}>
+                        {address.split(',')[0]}
+                      </a>
+                    ) : (
+                      <em>no address provided</em>
+                    )}
+                  </PrecinctAddress>
+                  <SampleBallots>
+                    {
+                      election.ballotStyles
+                        .filter((bs) => bs.precincts.includes(precinctId))
+                        .map((bs) => (
+                          <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
+                        ))
+                    }
+                  </SampleBallots>
+                </Precinct>
+              ))}
+            </PrecinctsList>
           </Container>
         </React.Fragment>
       )}
