@@ -399,7 +399,6 @@ const App: React.FC = () => {
       const jsonResponse: Results = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
         setResults(jsonResponse)
-	setCurrentPage((!!jsonResponse?.ballotsCounted) ? 'results' : 'info')
       }
     } else {
       console.log(response.status, response.statusText);
@@ -437,6 +436,11 @@ const App: React.FC = () => {
     }, refreshInterval * 1000);
     return () => clearTimeout(timer)
   })
+
+  // new results, go to results tab
+  useEffect(() => {
+    setCurrentPage((!!results?.ballotsCounted) ? 'results' : 'info')
+  }, [results])
 
   const PoweredBy = () => (
     <Container>
