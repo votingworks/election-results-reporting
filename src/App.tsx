@@ -334,7 +334,7 @@ const PoweredByVotingWorks = styled.p`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 5rem 0;
+  margin: 2rem 0;
   color: inherit;
   font-size: 1rem;
   text-align: center;
