@@ -399,6 +399,7 @@ const App: React.FC = () => {
       const jsonResponse: Results = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
         setResults(jsonResponse)
+	setCurrentPage((!!jsonResponse?.ballotsCounted) ? 'results' : 'info')
       }
     } else {
       console.log(response.status, response.statusText);
