@@ -480,7 +480,7 @@ const App: React.FC = () => {
                 </Actions>
               )}
               <Headline>
-                {results?.isOfficial ? 'Offical Results':'Unoffical Results'}
+                {results?.isOfficial ? 'Official Results':'Unofficial Results'}
               </Headline>
               <LastUpdated>
                 Results last updated on{' '}
