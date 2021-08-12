@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react'
 import './App.css'
 import dashify from 'dashify'
 import styled from 'styled-components'
+import {
+  BrowserRouter as Router,
+  Route,
+  RouteProps,
+  Switch,
+  Redirect,
+} from 'react-router-dom'
 
 import { ResultsCandidates, Results} from './config/types'
 import {
@@ -10,6 +17,9 @@ import {
 } from './utils/IntlDateTimeFormats'
 
 import election from './data/err-election.json'
+
+import ElectionScreen from './components/ElectionScreen'
+import ElectionResults from './components/ElectionResults'
 
 const NoWrap = styled.span`
   white-space: nowrap;
@@ -449,196 +459,204 @@ const App: React.FC = () => {
   )
 
   return (
-    <div>
-      <NavigationBanner>
-        <Container>
-          <Navigation>
-            <Brand>
-              <SealImg
-                src={election.sealURL}
-                alt="seal"
-              />
-            </Brand>
-            <NavigationContent>
-              <NavHeader>City of Vicksburg, {election.state}</NavHeader>
-              <NavTabs>
-                <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
-                <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
-              </NavTabs>
-            </NavigationContent>
-          </Navigation>
-        </Container>
-      </NavigationBanner>
-      {currentPage === 'results' && !results && (
-        <Container>
-          <Refresh>Loading results…</Refresh>
-        </Container>
-      )}
-      {currentPage === 'results' && results && (
-        <React.Fragment>
-          <Container>
-            <PageHeader>
-              {hasResults && (
-                <Actions>
-                  <Button onClick={window.print}>Print Results</Button>
-                </Actions>
-              )}
-              <Headline>
-                {results?.isOfficial ? 'Official Results':'Unofficial Results'}
-              </Headline>
-              <LastUpdated>
-                Results last updated on{' '}
-                <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
-                This page will automatically refresh when new results data are available.
-              </LastUpdated>
-              <LastUpdated>
-              Official results will be finalized when the election is certified on{' '}
-                <NoWrap>{localeWeekdayAndDate.format(certificationDate)}</NoWrap>.
-              </LastUpdated>
-              <ElectionTitle>{election.title}</ElectionTitle>
-              <ElectionDate>
-                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
-                <NoWrap>{pollsOpenPhrase}</NoWrap>
-              </ElectionDate>
-              {hasResults ? (
-                <DataPoint>
-                  <NoWrap>{formatPercentage(results.ballotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
-                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
-                  <NoWrap>
-                    {
-                      results.isOfficial
-                        ? `${results.ballotsCounted.toLocaleString()} ballots counted`
-                        : `${results.ballotsCounted.toLocaleString()} ballots counted thus far`
-                    }
-                  </NoWrap>
-                </DataPoint>
-              ) : (
-	      <>
-                <DataPoint>
-                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
-                </DataPoint>
-              <ResultsBanner>
-                Election results data will become available after polls close.
-             </ResultsBanner>
-	      </>
-              )}
-            </PageHeader>
-          </Container>
-          <Container>
-            <Contests>
-              {election.contests.map(
-                ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
-                  const contestVotes = sumCandidateVotes(
-                    results.contests[contestId].candidates
-                  )
-                  const writeIn = {
-                    id: 'writeIn',
-                    name: 'Write-In',
-                    partyId: ''
-                  }
-                  const candidates = [
-                    ...contestCandidates,
-                    writeIn,
-                  ]
-                  return (
-                    <Contest key={contestId}>
-                      <Row>
-                        <div>
-                          <ContestSection>{section}</ContestSection>
-                          <ContestTitle>{title}</ContestTitle>
-                        </div>
-                        <CandidateDataColumn>
-                          <CandidateDetail>
-                            {seats} winner
-                          </CandidateDetail>
-                        </CandidateDataColumn>
-                      </Row>
-                      <div>
-                        {candidates
-                          .sort((a, b) =>
-                            results.contests[contestId].candidates[b.id]
-                            - results.contests[contestId].candidates[a.id]
-                          )
-                          .map(({ id: candidateId, name, partyId }) => {
-                          const candidateVotes =
-                            results.contests[contestId].candidates[candidateId]
-                          return (
-                            <Candidate key={candidateId}>
-                              <CandidateProgressBar>
-                                <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
-                              </CandidateProgressBar>
-                              <CandidateRow data-percentage="50%">
-                                <CandidateDataColumn>
-                                  <CandidateMain as="h3">{name}</CandidateMain>
-                                  <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
-                                </CandidateDataColumn>
-                                <CandidateDataColumn>
-                                  <CandidateMain>
-                                    {formatPercentage(candidateVotes, contestVotes)}
-                                  </CandidateMain>
-                                  <CandidateDetail>{candidateVotes} votes</CandidateDetail>
-                                </CandidateDataColumn>
-                              </CandidateRow>
-                            </Candidate>
-                          )
-                        })}
-                      </div>
-                    </Contest>
-                  )
-                }
-              )}
-            </Contests>
-          </Container>
-          <Container>
-            <Refresh>This page will automatically refresh when new results data are available.</Refresh>
-          </Container>
-          <PoweredBy />
-        </React.Fragment>
-      )}
-      {currentPage === 'info' && (
-        <React.Fragment>
-          <Container>
-            <PageHeader>
-              <ElectionTitle as="h1">{election.title}</ElectionTitle>
-              <ElectionDate>
-                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
-                <NoWrap>{pollsOpenPhrase}</NoWrap>{' '}
-              </ElectionDate>
-              <PrecinctsHeading>Local Precincts</PrecinctsHeading>
-              <ElectionDate>
-                If you don’t know your polling place, please call the City of Vicksburg’s City Clerk’s Office at <NoWrap as="a" href="tel:+16016344553">601-634-4553</NoWrap>.
-              </ElectionDate>
-            </PageHeader>
-            <PrecinctsList>
-              {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
-                <Precinct key={precinctId}>
-                  <PrecinctName>{name}</PrecinctName>
-                  <PrecinctAddress>
-                    {address ? (
-                      <a href={`https://maps.google.com/?q=${address}`}>
-                        {address.split(',')[0]}
-                      </a>
-                    ) : (
-                      <em>no address provided</em>
+    <Router>
+      <Switch>
+        <Route exact path="/election-results-reporting">
+          <div>
+            <NavigationBanner>
+              <Container>
+                <Navigation>
+                  <Brand>
+                    <SealImg
+                      src={election.sealURL}
+                      alt="seal"
+                    />
+                  </Brand>
+                  <NavigationContent>
+                    <NavHeader>City of Vicksburg, {election.state}</NavHeader>
+                    <NavTabs>
+                      <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
+                      <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
+                    </NavTabs>
+                  </NavigationContent>
+                </Navigation>
+              </Container>
+            </NavigationBanner>
+            {currentPage === 'results' && !results && (
+              <Container>
+                <Refresh>Loading results…</Refresh>
+              </Container>
+            )}
+            {currentPage === 'results' && results && (
+              <React.Fragment>
+                <Container>
+                  <PageHeader>
+                    {hasResults && (
+                      <Actions>
+                        <Button onClick={window.print}>Print Results</Button>
+                      </Actions>
                     )}
-                  </PrecinctAddress>
-                  <SampleBallots>
-                    {
-                      election.ballotStyles
-                        .filter((bs) => bs.precincts.includes(precinctId))
-                        .map((bs) => (
-                          <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
-                        ))
-                    }
-                  </SampleBallots>
-                </Precinct>
-              ))}
-            </PrecinctsList>
-          </Container>
-          <PoweredBy />
-        </React.Fragment>
-      )}
-    </div>
+                    <Headline>
+                      {results?.isOfficial ? 'Official Results':'Unofficial Results'}
+                    </Headline>
+                    <LastUpdated>
+                      Results last updated on{' '}
+                      <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
+                      This page will automatically refresh when new results data are available.
+                    </LastUpdated>
+                    <LastUpdated>
+                    Official results will be finalized when the election is certified on{' '}
+                      <NoWrap>{localeWeekdayAndDate.format(certificationDate)}</NoWrap>.
+                    </LastUpdated>
+                    <ElectionTitle>{election.title}</ElectionTitle>
+                    <ElectionDate>
+                      <NoWrap>{electionDayPhrase}</NoWrap>{' '}
+                      <NoWrap>{pollsOpenPhrase}</NoWrap>
+                    </ElectionDate>
+                    {hasResults ? (
+                      <DataPoint>
+                        <NoWrap>{formatPercentage(results.ballotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
+                        <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
+                        <NoWrap>
+                          {
+                            results.isOfficial
+                              ? `${results.ballotsCounted.toLocaleString()} ballots counted`
+                              : `${results.ballotsCounted.toLocaleString()} ballots counted thus far`
+                          }
+                        </NoWrap>
+                      </DataPoint>
+                    ) : (
+              <>
+                      <DataPoint>
+                        <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
+                      </DataPoint>
+                    <ResultsBanner>
+                      Election results data will become available after polls close.
+                  </ResultsBanner>
+              </>
+                    )}
+                  </PageHeader>
+                </Container>
+                <Container>
+                  <Contests>
+                    {election.contests.map(
+                      ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
+                        const contestVotes = sumCandidateVotes(
+                          results.contests[contestId].candidates
+                        )
+                        const writeIn = {
+                          id: 'writeIn',
+                          name: 'Write-In',
+                          partyId: ''
+                        }
+                        const candidates = [
+                          ...contestCandidates,
+                          writeIn,
+                        ]
+                        return (
+                          <Contest key={contestId}>
+                            <Row>
+                              <div>
+                                <ContestSection>{section}</ContestSection>
+                                <ContestTitle>{title}</ContestTitle>
+                              </div>
+                              <CandidateDataColumn>
+                                <CandidateDetail>
+                                  {seats} winner
+                                </CandidateDetail>
+                              </CandidateDataColumn>
+                            </Row>
+                            <div>
+                              {candidates
+                                .sort((a, b) =>
+                                  results.contests[contestId].candidates[b.id]
+                                  - results.contests[contestId].candidates[a.id]
+                                )
+                                .map(({ id: candidateId, name, partyId }) => {
+                                const candidateVotes =
+                                  results.contests[contestId].candidates[candidateId]
+                                return (
+                                  <Candidate key={candidateId}>
+                                    <CandidateProgressBar>
+                                      <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
+                                    </CandidateProgressBar>
+                                    <CandidateRow data-percentage="50%">
+                                      <CandidateDataColumn>
+                                        <CandidateMain as="h3">{name}</CandidateMain>
+                                        <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
+                                      </CandidateDataColumn>
+                                      <CandidateDataColumn>
+                                        <CandidateMain>
+                                          {formatPercentage(candidateVotes, contestVotes)}
+                                        </CandidateMain>
+                                        <CandidateDetail>{candidateVotes} votes</CandidateDetail>
+                                      </CandidateDataColumn>
+                                    </CandidateRow>
+                                  </Candidate>
+                                )
+                              })}
+                            </div>
+                          </Contest>
+                        )
+                      }
+                    )}
+                  </Contests>
+                </Container>
+                <Container>
+                  <Refresh>This page will automatically refresh when new results data are available.</Refresh>
+                </Container>
+                <PoweredBy />
+              </React.Fragment>
+            )}
+            {currentPage === 'info' && (
+              <React.Fragment>
+                <Container>
+                  <PageHeader>
+                    <ElectionTitle as="h1">{election.title}</ElectionTitle>
+                    <ElectionDate>
+                      <NoWrap>{electionDayPhrase}</NoWrap>{' '}
+                      <NoWrap>{pollsOpenPhrase}</NoWrap>{' '}
+                    </ElectionDate>
+                    <PrecinctsHeading>Local Precincts</PrecinctsHeading>
+                    <ElectionDate>
+                      If you don’t know your polling place, please call the City of Vicksburg’s City Clerk’s Office at <NoWrap as="a" href="tel:+16016344553">601-634-4553</NoWrap>.
+                    </ElectionDate>
+                  </PageHeader>
+                  <PrecinctsList>
+                    {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
+                      <Precinct key={precinctId}>
+                        <PrecinctName>{name}</PrecinctName>
+                        <PrecinctAddress>
+                          {address ? (
+                            <a href={`https://maps.google.com/?q=${address}`}>
+                              {address.split(',')[0]}
+                            </a>
+                          ) : (
+                            <em>no address provided</em>
+                          )}
+                        </PrecinctAddress>
+                        <SampleBallots>
+                          {
+                            election.ballotStyles
+                              .filter((bs) => bs.precincts.includes(precinctId))
+                              .map((bs) => (
+                                <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
+                              ))
+                          }
+                        </SampleBallots>
+                      </Precinct>
+                    ))}
+                  </PrecinctsList>
+                </Container>
+                <PoweredBy />
+              </React.Fragment>
+            )}
+          </div>
+        </Route>
+        <Route exact path="/election" component={ElectionScreen} />
+        <Route exact path="/election-results" component={ElectionResults} />
+      </Switch>
+    </Router>
   )
 }
 
