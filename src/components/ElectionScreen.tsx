@@ -1,5 +1,5 @@
 import React from 'react'
-import { HTMLSelect, ButtonGroup } from '@blueprintjs/core'
+import { ButtonGroup } from '@blueprintjs/core'
 import styled from 'styled-components'
 import { Formik, FormikProps, Field } from 'formik'
 import LinkButton from './Atoms/LinkButton'
@@ -9,76 +9,66 @@ import { Wrapper, Inner } from './Atoms/Wrapper'
 import FormField from './Atoms/Form/FormField'
 import CSVFile, { IFileInfo } from './CSVForm/index'
 
-const activeElections = [
+interface IValues {
+  electionName: string,
+  electionDate: Date | null,
+  pollsOpen: TimeRanges | string,
+  pollsClose: TimeRanges | string,
+  timezone: string,
+  certificationDate: Date | null,
+  participatingJurisdictions: File | null,
+  electionDefinition: File | null
+}
+
+const activeElections: IValues[] = [
   {
-    id: 0,
     electionName: 'Election 1',
     electionDate: new Date(),
-    pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
-    pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
+    pollsOpen: new Date().getHours().toString()+':'+new Date().getMinutes().toString(),
+    pollsClose: (new Date().getHours()+3).toString()+':'+new Date().getMinutes().toString(),
     timezone: 'CST',
     certificationDate: new Date(),
-    participatingJursidiction: null,
+    participatingJurisdictions: null,
     electionDefinition: null,
   },
   {
-    id: 1,
     electionName: 'Sample Election 2',
     electionDate: new Date(),
     pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
     pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
     timezone: 'UTC',
     certificationDate: new Date(),
-    participatingJursidiction: null,
+    participatingJurisdictions: null,
     electionDefinition: null,
   },
   {
-    id: 2,
     electionName: 'Sample 3',
     electionDate: new Date(),
     pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
     pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
     timezone: 'IST',
     certificationDate: new Date(),
-    participatingJursidiction: null,
+    participatingJurisdictions: null,
     electionDefinition: null,
   }
 ]
 
-const CreateElectionWrapper = styled.div`
-  background-color: #ebf1f5;
-  padding: 30px;
-`
-
-const ActiveElectionsWrapper = styled.div`
-  padding: 30px;
-`
-
-const WideField = styled(FormField)`
-  width: 100%;
-`
-
-const InlineField = styled(FormField)`
-  width: 100%;
-  padding-right: 12px;
-`
-
-const Select = styled(HTMLSelect)`
-  margin-top: 5px;
-`
-
-interface IValues {
-  electionName: string
-  electionDate: Date | string
-  pollsOpen: TimeRanges | string
-  pollsClose: TimeRanges | string
-  timezone: string
-  certificationDate: Date | string
-  participatingJurisdictions: File | null
-  electionDefinition: File | null
-}
-
 const CreateElection: React.FC = () => {
+  const CreateElectionWrapper = styled.div`
+    width: 100%;
+    background-color: #ebf1f5;
+    padding: 30px;
+  `
+
+  const WideField = styled(FormField)`
+    width: 100%;
+  `
+
+  const InlineFormField = styled(FormField)`
+    width: 100%;
+    padding-right: 12px;
+  `
+
   const InlineLabel = styled.label`
     display: inline-flex;
     flex-wrap: wrap;
@@ -104,11 +94,11 @@ const CreateElection: React.FC = () => {
       onSubmit={() => console.log('submitted')}
       initialValues={{
         electionName: '',
-        electionDate: '',
+        electionDate: null,
         pollsOpen: '',
         pollsClose: '',
         timezone: '',
-        certificationDate: '',
+        certificationDate: null,
         participatingJurisdictions: null,
         electionDefinition: null,
       }}
@@ -150,7 +140,7 @@ const CreateElection: React.FC = () => {
                 name="pollsOpen"
                 type="time"
                 validate={(v: string) => (v ? undefined : 'Required')}
-                component={InlineField}
+                component={InlineFormField}
               />
             </InlineLabel>
             <InlineLabel htmlFor="pollsClose">
@@ -160,7 +150,7 @@ const CreateElection: React.FC = () => {
                 name="pollsClose"
                 type="time"
                 validate={(v: string) => (v ? undefined : 'Required')}
-                component={InlineField}
+                component={InlineFormField}
               />
             </InlineLabel>
             <InlineLabel htmlFor="timezone">
@@ -219,15 +209,20 @@ const CreateElection: React.FC = () => {
 }
 
 const ActiveElections = () => {
+  const ActiveElectionsWrapper = styled.div`
+    width: 100%;
+    padding: 30px;
+  `
+
   return (
     <ActiveElectionsWrapper>
       <h2>Active Elections</h2>
       {activeElections.length === 0 ? (
         <p>You haven&apos;t created any elections yet</p>
       ) : (
-        activeElections.map((elec) => (
+        activeElections.map((elec, index) => (
           <ButtonGroup
-            key={elec.id}
+            key={index}
             fill
             large
             style={{ marginBottom: '15px' }}
@@ -248,16 +243,23 @@ const ActiveElections = () => {
 }
 
 const ElectionScreen: React.FC = () => {
+  const ResponsiveInner = styled(Inner)`
+    @media only screen and (max-width: 768px) {
+      flex-direction: column-reverse;
+      align-items: center;
+    }
+    @media only screen and (min-width: 1440px) {
+      min-width: 100vw;
+      padding: 1% 20% 0 20%;
+    }
+  `
+
   return (
     <Wrapper>
-      <Inner>
-        <div style={{ width: '50%' }}>
-          <CreateElection />
-        </div>
-        <div style={{ width: '50%' }}>
-          <ActiveElections />
-        </div>
-      </Inner>
+      <ResponsiveInner>
+        <CreateElection />
+        <ActiveElections />
+      </ResponsiveInner>
     </Wrapper>
   )
 }

@@ -8,7 +8,6 @@ import FormButton from '../Atoms/Form/FormButton'
 import schema from './schema'
 import { ErrorLabel, SuccessLabel } from '../Atoms/Form/_helpers'
 import FormSection, { FormSectionDescription } from '../Atoms/Form/FormSection'
-// import { FileProcessingStatus, IFileInfo } from '../useCSV'
 
 enum FileProcessingStatus {
   READY_TO_PROCESS = 'READY_TO_PROCESS',
@@ -129,6 +128,7 @@ const CSVFileForm = ({
                     text={values.csv ? values.csv.name : 'Select a CSV...'}
                     onBlur={handleBlur}
                     disabled={isSubmitting || isProcessing || !enabled}
+                    fill
                   />
                   {errors.csv && touched.csv && (
                     <ErrorLabel>{errors.csv}</ErrorLabel>

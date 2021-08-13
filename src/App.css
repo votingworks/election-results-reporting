@@ -48,22 +48,31 @@ button {
 }
 
 /* Foundational */
+html,
+body,
+#root {
+  height: 100%;
+}
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+  }
+}
+
 body {
   margin: 0;
   font-size: 16px;
   font-family: Roboto, 'Helvetica Neue', Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #eeeeee;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
-}
-
-h1, h2, h3, h4, h5, h6, p {
-  margin: 0;
 }
 
 small {

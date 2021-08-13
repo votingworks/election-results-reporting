@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react'
 import './App.css'
 import dashify from 'dashify'
 import styled from 'styled-components'
+import { Wrapper } from './components/Atoms/Wrapper'
 import {
   BrowserRouter as Router,
   Route,
-  RouteProps,
   Switch,
-  Redirect,
 } from 'react-router-dom'
 
 import { ResultsCandidates, Results} from './config/types'
@@ -20,6 +19,7 @@ import election from './data/err-election.json'
 
 import ElectionScreen from './components/ElectionScreen'
 import ElectionResults from './components/ElectionResults'
+import ElectionData from './components/ElectionData'
 
 const NoWrap = styled.span`
   white-space: nowrap;
@@ -655,6 +655,10 @@ const App: React.FC = () => {
         </Route>
         <Route exact path="/election" component={ElectionScreen} />
         <Route exact path="/election-results" component={ElectionResults} />
+        <Route exact path="/election-data" component={ElectionData} />
+        <Route>
+          <Wrapper>404 Not Found</Wrapper>
+        </Route>
       </Switch>
     </Router>
   )
