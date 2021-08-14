@@ -22,7 +22,7 @@ interface IContest {
 }
 
 interface IValues {
-  precintName: string
+  precinctName: string
   ballotType: string
   totalBallotsCast: number
   contest: string
@@ -141,9 +141,9 @@ const ResultsDataForm = () => {
     },
   ]
 
-  const labelValuePrecints = [
-    { value: 'P1', label: 'Precint 1' },
-    { value: 'P2', label: 'Sample Precint 2' },
+  const labelValuePrecincts = [
+    { value: 'P1', label: 'Precinct 1' },
+    { value: 'P2', label: 'Sample Precinct 2' },
     { value: 'P3', label: 'Sample 3' }
   ]
 
@@ -163,7 +163,7 @@ const ResultsDataForm = () => {
     <Formik
       onSubmit={() => console.log('submitted')}
       initialValues={{
-        precintName: '',
+        precinctName: '',
         ballotType: '',
         totalBallotsCast: 0,
         contest: '',
@@ -176,8 +176,8 @@ const ResultsDataForm = () => {
           <h2>Election Results Data</h2>
           <FormSection>
             {/* eslint-disable jsx-a11y/label-has-associated-control */}
-            <label htmlFor="precintName">
-              <p>Precint Name</p>
+            <label htmlFor="precinctName">
+              <p>Precinct Name</p>
               <div>
                 <Field
                   component={Select}
@@ -186,8 +186,8 @@ const ResultsDataForm = () => {
                   onChange={(e: React.FormEvent<HTMLSelectElement>) =>
                     setFieldValue('precinctName', e.currentTarget.value)
                   }
-                  value={values.precintName}
-                  options={[{ value: '', label: 'Choose' }, ...labelValuePrecints]}
+                  value={values.precinctName}
+                  options={[{ value: '', label: 'Choose' }, ...labelValuePrecincts]}
                   />
                   <ErrorMessage name="precinctName" component={ErrorLabel} />
                 </div>
@@ -205,7 +205,7 @@ const ResultsDataForm = () => {
                   onChange={(e: React.FormEvent<HTMLSelectElement>) =>
                     setFieldValue('ballotType', e.currentTarget.value)
                   }
-                  value={values.precintName}
+                  value={values.precinctName}
                   options={[{ value: '', label: 'Choose' }, ...labelValueBallotTypes]}
                 />
               <ErrorMessage name="ballotType" component={ErrorLabel} />

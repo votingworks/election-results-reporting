@@ -526,14 +526,14 @@ const App: React.FC = () => {
                         </NoWrap>
                       </DataPoint>
                     ) : (
-              <>
-                      <DataPoint>
-                        <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
-                      </DataPoint>
-                    <ResultsBanner>
-                      Election results data will become available after polls close.
-                  </ResultsBanner>
-              </>
+                      <>
+                        <DataPoint>
+                          <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
+                        </DataPoint>
+                        <ResultsBanner>
+                          Election results data will become available after polls close.
+                        </ResultsBanner>
+                      </>
                     )}
                   </PageHeader>
                 </Container>
