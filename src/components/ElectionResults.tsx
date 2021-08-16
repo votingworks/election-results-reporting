@@ -30,17 +30,17 @@ interface IValues {
   contests: IContest[]
 }
 
+const UploadResultsDataWrapper = styled.div`
+  width: 100%;
+  padding: 30px;
+`
+
+const resultsDataFile: IFileInfo = {
+  file: null,
+  processing: null,
+}
+
 const ResultsDataUpload = () => {
-  const UploadResultsDataWrapper = styled.div`
-    width: 100%;
-    padding: 30px;
-  `
-
-  const resultsDataFile: IFileInfo = {
-    file: null,
-    processing: null,
-  }
-
   return (
     <UploadResultsDataWrapper>
       <h2>Upload Results Data</h2>
@@ -58,32 +58,32 @@ const ResultsDataUpload = () => {
   );
 }
 
+const ResultsDataFormWrapper = styled.div`
+  width: 100%;
+  background-color: #ebf1f5;
+  padding: 30px;
+`
+
+const WideField = styled(FormField)`
+  width: 100%;
+`
+
+const SpacedDiv = styled.div`
+  margin: 20px auto;
+`
+
+const Select = styled(HTMLSelect)`
+  // margin-left: 5px;
+  width: 100%;
+`
+
+const AddButton = styled(FormButton)`
+  font-size: 24px;
+  font-weight: bold;
+  padding: 0 0 4px 0;
+`
+
 const ResultsDataForm = () => {
-  const ResultsDataFormWrapper = styled.div`
-    width: 100%;
-    background-color: #ebf1f5;
-    padding: 30px;
-  `
-
-  const WideField = styled(FormField)`
-    width: 100%;
-  `
-
-  const SpacedDiv = styled.div`
-    margin: 20px auto;
-  `
-
-  const Select = styled(HTMLSelect)`
-    // margin-left: 5px;
-    width: 100%;
-  `
-
-  const AddButton = styled(FormButton)`
-    font-size: 24px;
-    font-weight: bold;
-    padding: 0 0 4px 0;
-  `
-
   const contestValues: IContest[] = [
     {
       id: '',
@@ -295,15 +295,15 @@ const ResultsDataForm = () => {
   )
 }
 
-const ElectionResults: React.FC = () => {
-  const ResponsiveInner = styled(Inner)`
-    @media only screen and (max-width: 768px) {
-      flex-direction: column-reverse;
-      align-items: center;
-    }
-  `
+const ResponsiveInner = styled(Inner)`
+  @media only screen and (max-width: 768px) {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+`
 
-  return (
+const ElectionResults: React.FC = () => {
+return (
     <Wrapper>
       <ResponsiveInner>
         <ResultsDataForm />

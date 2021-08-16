@@ -7,37 +7,37 @@ import { Wrapper, Inner } from './Atoms/Wrapper'
 import { Table } from './Atoms/Table'
 import { useConfirm, Confirm } from './Atoms/Confirm'
 
+const DataTableWrapper = styled.div`
+  width: 100%;
+  margin-top: 30px;
+`
+
+const TableWrapper = styled.div`
+  overflow-x: auto;
+  scrollbar-width: 2px;
+  ::-webkit-scrollbar {
+    height: 5px;
+  }
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+      background: #e1e8ed; 
+      border-radius: 10px;
+  }
+`
+
+const SpacedButtonGroup = styled(ButtonGroup)`
+  text-align: center;
+  padding: 0 12px;
+  *:not(:last-child){
+    margin-right: 20px !important;
+  }
+`
+
+const ActionButton = styled(LinkButton)`
+  width: 20px;
+`
+
 const DataTable = () => {
-  const DataTableWrapper = styled.div`
-    width: 100%;
-    margin-top: 30px;
-  `
-
-  const TableWrapper = styled.div`
-    overflow-x: auto;
-    scrollbar-width: 2px;
-    ::-webkit-scrollbar {
-      height: 5px;
-    }
-    /* Handle */
-    ::-webkit-scrollbar-thumb {
-        background: #e1e8ed; 
-        border-radius: 10px;
-    }
-  `
-
-  const SpacedButtonGroup = styled(ButtonGroup)`
-    text-align: center;
-    padding: 0 12px;
-    *:not(:last-child){
-      margin-right: 20px !important;
-    }
-  `
-
-  const ActionButton = styled(LinkButton)`
-    width: 20px;
-  `
-
   const { confirm, confirmProps } = useConfirm()
 
   interface IElection {

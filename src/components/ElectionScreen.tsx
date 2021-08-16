@@ -11,13 +11,13 @@ import CSVFile, { IFileInfo } from './CSVForm/index'
 
 interface IValues {
   electionName: string,
-  electionDate: Date | null,
+  electionDate: Date | string,
   pollsOpen: TimeRanges | string,
   pollsClose: TimeRanges | string,
   timezone: string,
-  certificationDate: Date | null,
-  participatingJurisdictions: File | null,
-  electionDefinition: File | null
+  certificationDate: Date | string,
+  participatingJurisdictions: File | string,
+  electionDefinition: File | string
 }
 
 const activeElections: IValues[] = [
@@ -28,8 +28,8 @@ const activeElections: IValues[] = [
     pollsClose: (new Date().getHours()+3).toString()+':'+new Date().getMinutes().toString(),
     timezone: 'CST',
     certificationDate: new Date(),
-    participatingJurisdictions: null,
-    electionDefinition: null,
+    participatingJurisdictions: '',
+    electionDefinition: '',
   },
   {
     electionName: 'Sample Election 2',
@@ -38,8 +38,8 @@ const activeElections: IValues[] = [
     pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
     timezone: 'UTC',
     certificationDate: new Date(),
-    participatingJurisdictions: null,
-    electionDefinition: null,
+    participatingJurisdictions: '',
+    electionDefinition: '',
   },
   {
     electionName: 'Sample 3',
@@ -48,37 +48,37 @@ const activeElections: IValues[] = [
     pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
     timezone: 'IST',
     certificationDate: new Date(),
-    participatingJurisdictions: null,
-    electionDefinition: null,
+    participatingJurisdictions: '',
+    electionDefinition: '',
   }
 ]
 
+const CreateElectionWrapper = styled.div`
+  width: 100%;
+  background-color: #ebf1f5;
+  padding: 30px;
+`
+
+const WideField = styled(FormField)`
+  width: 100%;
+`
+
+const InlineFormField = styled(FormField)`
+  width: 100%;
+  padding-right: 12px;
+`
+
+const InlineLabel = styled.label`
+  display: inline-flex;
+  flex-wrap: wrap;
+  width: 33.33%;
+
+  @media only screen and (max-width: 767px) {
+    width: 100%;
+  }
+`
+
 const CreateElection: React.FC = () => {
-  const CreateElectionWrapper = styled.div`
-    width: 100%;
-    background-color: #ebf1f5;
-    padding: 30px;
-  `
-
-  const WideField = styled(FormField)`
-    width: 100%;
-  `
-
-  const InlineFormField = styled(FormField)`
-    width: 100%;
-    padding-right: 12px;
-  `
-
-  const InlineLabel = styled.label`
-    display: inline-flex;
-    flex-wrap: wrap;
-    width: 33.33%;
-
-    @media only screen and (max-width: 767px) {
-      width: 100%;
-    }
-  `
-
   const jurisdictionsFile: IFileInfo = {
     file: null,
     processing: null,
@@ -94,13 +94,13 @@ const CreateElection: React.FC = () => {
       onSubmit={() => console.log('submitted')}
       initialValues={{
         electionName: '',
-        electionDate: null,
+        electionDate: '',
         pollsOpen: '',
         pollsClose: '',
         timezone: '',
-        certificationDate: null,
-        participatingJurisdictions: null,
-        electionDefinition: null,
+        certificationDate: '',
+        participatingJurisdictions: '',
+        electionDefinition: '',
       }}
     >
       {({ setFieldValue, setValues, values }: FormikProps<IValues>) => (
@@ -242,26 +242,23 @@ const ActiveElections = () => {
   )
 }
 
-const ElectionScreen: React.FC = () => {
-  const ResponsiveInner = styled(Inner)`
-    @media only screen and (max-width: 768px) {
-      flex-direction: column-reverse;
-      align-items: center;
-    }
-    @media only screen and (min-width: 1440px) {
-      min-width: 100vw;
-      padding: 1% 20% 0 20%;
-    }
-  `
+const ResponsiveInner = styled(Inner)`
+  @media only screen and (max-width: 768px) {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+  @media only screen and (min-width: 1440px) {
+    min-width: 100vw;
+    padding: 1% 20% 0 20%;
+  }
+`
 
-  return (
-    <Wrapper>
-      <ResponsiveInner>
-        <CreateElection />
-        <ActiveElections />
-      </ResponsiveInner>
-    </Wrapper>
-  )
-}
+const ElectionScreen: React.FC = () =>
+  <Wrapper>
+    <ResponsiveInner>
+      <CreateElection />
+      <ActiveElections />
+    </ResponsiveInner>
+  </Wrapper>
 
 export default ElectionScreen
