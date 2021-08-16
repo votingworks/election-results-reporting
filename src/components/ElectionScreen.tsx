@@ -8,48 +8,53 @@ import FormButton from './Atoms/Form/FormButton'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 import FormField from './Atoms/Form/FormField'
 import CSVFile, { IFileInfo } from './CSVForm/index'
+import { isNullishCoalesce } from 'typescript'
 
 interface IValues {
+  id: string,
   electionName: string,
   electionDate: Date | string,
   pollsOpen: TimeRanges | string,
   pollsClose: TimeRanges | string,
   timezone: string,
   certificationDate: Date | string,
-  participatingJurisdictions: File | string,
-  electionDefinition: File | string
+  participatingJurisdictions: File | null,
+  electionDefinition: File | null
 }
 
 const activeElections: IValues[] = [
   {
+    id: '0',
     electionName: 'Election 1',
     electionDate: new Date(),
     pollsOpen: new Date().getHours().toString()+':'+new Date().getMinutes().toString(),
     pollsClose: (new Date().getHours()+3).toString()+':'+new Date().getMinutes().toString(),
     timezone: 'CST',
     certificationDate: new Date(),
-    participatingJurisdictions: '',
-    electionDefinition: '',
+    participatingJurisdictions: null,
+    electionDefinition: null,
   },
   {
+    id: '1',
     electionName: 'Sample Election 2',
     electionDate: new Date(),
     pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
     pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
     timezone: 'UTC',
     certificationDate: new Date(),
-    participatingJurisdictions: '',
-    electionDefinition: '',
+    participatingJurisdictions: null,
+    electionDefinition: null,
   },
   {
+    id: '2',
     electionName: 'Sample 3',
     electionDate: new Date(),
     pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
     pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
     timezone: 'IST',
     certificationDate: new Date(),
-    participatingJurisdictions: '',
-    electionDefinition: '',
+    participatingJurisdictions: null,
+    electionDefinition: null,
   }
 ]
 
@@ -93,14 +98,15 @@ const CreateElection: React.FC = () => {
     <Formik
       onSubmit={() => console.log('submitted')}
       initialValues={{
+        id: '',
         electionName: '',
         electionDate: '',
         pollsOpen: '',
         pollsClose: '',
         timezone: '',
         certificationDate: '',
-        participatingJurisdictions: '',
-        electionDefinition: '',
+        participatingJurisdictions: null,
+        electionDefinition: null,
       }}
     >
       {({ setFieldValue, setValues, values }: FormikProps<IValues>) => (
@@ -220,9 +226,9 @@ const ActiveElections = () => {
       {activeElections.length === 0 ? (
         <p>You haven&apos;t created any elections yet</p>
       ) : (
-        activeElections.map((elec, index) => (
+        activeElections.map(elec => (
           <ButtonGroup
-            key={index}
+            key={elec.id}
             fill
             large
             style={{ marginBottom: '15px' }}
