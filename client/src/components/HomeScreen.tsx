@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 
 import 'react-toastify/dist/ReactToastify.css'
 import dashify from 'dashify'
-import { AnchorButton, Card, Callout } from '@blueprintjs/core'
 import styled from 'styled-components'
 
 import { ResultsCandidates, Results} from '../config/types'
@@ -12,9 +10,11 @@ import {
   localeWeekdayAndDate,
 } from '../utils/IntlDateTimeFormats'
 
-import { useAuthDataContext } from './UserContext'
-
 import election from '../data/err-election.json'
+
+const HomeScreenContainer = styled.div`
+  width: 100%;
+`
 
 const NoWrap = styled.span`
   white-space: nowrap;
@@ -376,66 +376,19 @@ const datesAreOnSameDay = (first: Date, second: Date): boolean =>
   first.getMonth() === second.getMonth() &&
   first.getDate() === second.getDate();
 
-  const LoginWrapper = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  @media (min-width: 500px) {
-    width: 400px;
-  }
-  text-align: center;
-`
-
-interface ILoginScreenProps {
-  redirectURLOnSuccess: string | undefined
-}
-
-const LoginScreen: React.FC<ILoginScreenProps> = ({ redirectURLOnSuccess }: ILoginScreenProps) => {
-  // Support two query parameters: 'error' and 'message'
-  // We use these to communicate authentication errors to the user.
-  const query = new URLSearchParams(useLocation().search)
-
-  return (
-    <LoginWrapper>
-      <img height="50px" src="/arlo.png" alt="Arlo, by VotingWorks" />
-      {query.get('error') && (
-        <Callout intent="danger" style={{ margin: '20px 0 20px 0' }}>
-          {query.get('message')}
-        </Callout>
-      )}
-      <Card style={{ margin: '25px 0 15px 0' }}>
-        <p>Participating in an audit in your local jurisdiction?</p>
-        <AnchorButton
-          href={'/auth/jurisdictionadmin/start'+(redirectURLOnSuccess ? `?redirectOnSucess=${redirectURLOnSuccess}` : '')}
-          intent="primary"
-          large
-        >
-          Log in to your audit
-        </AnchorButton>
-      </Card>
-      <div>
-        <p>
-          State-level audit administrators:{' '}
-          <a href={'/auth/auditadmin/start'+(redirectURLOnSuccess ? `?redirectOnSucess=${redirectURLOnSuccess}` : '')}>Log in as an admin</a>
-        </p>
-      </div>
-    </LoginWrapper>
-  )
-}
 
 // pre-election || during-election || post-election
 const refreshInterval = 60
 const ElectionNightReporting: React.FC = () => {
   const getElectionStatus = () => {
-      const now = new Date()
-      if (now <= new Date(election.polls.openAt)) {
+    const now = new Date()
+    if (now <= new Date(election.polls.openAt)) {
       return 'pre-election'
-      }
-      if (now >= new Date(election.polls.closeAt)) {
+    }
+    if (now >= new Date(election.polls.closeAt)) {
       return 'post-election'
-      }
-      return 'during-election'
+    }
+    return 'during-election'
   }
   const isElectionDay = datesAreOnSameDay(new Date(), new Date(election.date))
   const [ electionStatus, setElectionStatus ] = useState(getElectionStatus)
@@ -446,22 +399,22 @@ const ElectionNightReporting: React.FC = () => {
   const [ currentPage, setCurrentPage ] = useState(hasResults ? 'results' : 'info')
 
   const fetchResults = async () => {
-      const response = await fetch(process.env.REACT_APP_API || "https://err-backend-worker.votingworks.workers.dev/warren")
-      if (response.status >= 200 && response.status <= 299) {
-        const jsonResponse: Results = await response.json()
-        if (Object.keys(jsonResponse).length !== 0) {
-            setResults(jsonResponse)
-        }
-      } else {
-        console.log(response.status, response.statusText);
+    const response = await fetch(process.env.REACT_APP_API || "https://err-backend-worker.votingworks.workers.dev/warren")
+    if (response.status >= 200 && response.status <= 299) {
+      const jsonResponse: Results = await response.json()
+      if (Object.keys(jsonResponse).length !== 0) {
+        setResults(jsonResponse)
       }
+    } else {
+      console.log(response.status, response.statusText);
+    }
   }
 
   const electionDayPhrase = isElectionDay
     ? 'Election Day is today.'
     : electionStatus === 'post-election'
-    ? `Election Day was ${localeWeekdayAndDate.format(new Date(election.date))}.`
-    : `Election Day is ${localeWeekdayAndDate.format(new Date(election.date))}.`
+      ? `Election Day was ${localeWeekdayAndDate.format(new Date(election.date))}.`
+      : `Election Day is ${localeWeekdayAndDate.format(new Date(election.date))}.`
 
   const pollsOpenPhrase = electionStatus === "post-election"
     ? 'Polls are closed.'
@@ -479,19 +432,19 @@ const ElectionNightReporting: React.FC = () => {
 
   // Refresh Results
   useEffect(() => {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
       setElectionStatus(getElectionStatus)
       if (refreshCountdown === 0) {
-          fetchResults()
+        fetchResults()
       }
-      }, refreshInterval * 1000);
-      return () => clearTimeout(timer)
+    }, refreshInterval * 1000);
+    return () => clearTimeout(timer)
   })
 
   // new results, go to results tab
   useEffect(() => {
-      setCurrentPage((!!results?.ballotsCounted) ? 'results' : 'info')
+    setCurrentPage((!!results?.ballotsCounted) ? 'results' : 'info')
   }, [results])
 
   const PoweredBy = () => (
@@ -501,21 +454,21 @@ const ElectionNightReporting: React.FC = () => {
   )
 
   return (
-    <div>
+    <HomeScreenContainer>
       <NavigationBanner>
         <Container>
           <Navigation>
             <Brand>
               <SealImg
-                  src={election.sealURL}
-                  alt="seal"
+                src={election.sealURL}
+                alt="seal"
               />
             </Brand>
             <NavigationContent>
               <NavHeader>City of Vicksburg, {election.state}</NavHeader>
               <NavTabs>
-                  <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
-                  <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
+                <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
+                <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
               </NavTabs>
             </NavigationContent>
           </Navigation>
@@ -528,181 +481,174 @@ const ElectionNightReporting: React.FC = () => {
       )}
       {currentPage === 'results' && results && (
         <React.Fragment>
-            <Container>
-                <PageHeader>
-                    {hasResults && (
-                        <Actions>
-                            <Button onClick={window.print}>Print Results</Button>
-                        </Actions>
-                    )}
-                    <Headline>
-                        {results?.isOfficial ? 'Official Results':'Unofficial Results'}
-                    </Headline>
-                    <LastUpdated>
-                        Results last updated on{' '}
-                        <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
-                        This page will automatically refresh when new results data are available.
-                    </LastUpdated>
-                    <LastUpdated>
-                    Official results will be finalized when the election is certified on{' '}
-                        <NoWrap>{localeWeekdayAndDate.format(certificationDate)}</NoWrap>.
-                    </LastUpdated>
-                    <ElectionTitle>{election.title}</ElectionTitle>
-                    <ElectionDate>
-                        <NoWrap>{electionDayPhrase}</NoWrap>{' '}
-                        <NoWrap>{pollsOpenPhrase}</NoWrap>
-                    </ElectionDate>
-                    {hasResults ? (
-                        <DataPoint>
-                            <NoWrap>{formatPercentage(results.ballotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
-                            <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
-                            <NoWrap>
-                                {
-                                results.isOfficial
-                                    ? `${results.ballotsCounted.toLocaleString()} ballots counted`
-                                    : `${results.ballotsCounted.toLocaleString()} ballots counted thus far`
-                                }
-                            </NoWrap>
-                        </DataPoint>
-                    ) : (
-                        <>
-                        <DataPoint>
-                            <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
-                        </DataPoint>
-                        <ResultsBanner>
-                            Election results data will become available after polls close.
-                        </ResultsBanner>
-                        </>
-                    )}
-                </PageHeader>
-            </Container>
-            <Container>
-              <Contests>
-                {election.contests.map(
-                  ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
+          <Container>
+            <PageHeader>
+              {hasResults && (
+                <Actions>
+                  <Button onClick={window.print}>Print Results</Button>
+                </Actions>
+              )}
+              <Headline>
+                {results?.isOfficial ? 'Official Results':'Unofficial Results'}
+              </Headline>
+              <LastUpdated>
+                Results last updated on{' '}
+                <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
+                This page will automatically refresh when new results data are available.
+              </LastUpdated>
+              <LastUpdated>
+              Official results will be finalized when the election is certified on{' '}
+                <NoWrap>{localeWeekdayAndDate.format(certificationDate)}</NoWrap>.
+              </LastUpdated>
+              <ElectionTitle>{election.title}</ElectionTitle>
+              <ElectionDate>
+                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
+                <NoWrap>{pollsOpenPhrase}</NoWrap>
+              </ElectionDate>
+              {hasResults ? (
+                <DataPoint>
+                  <NoWrap>{formatPercentage(results.ballotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
+                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
+                  <NoWrap>
+                    {
+                      results.isOfficial
+                        ? `${results.ballotsCounted.toLocaleString()} ballots counted`
+                        : `${results.ballotsCounted.toLocaleString()} ballots counted thus far`
+                    }
+                  </NoWrap>
+                </DataPoint>
+              ) : (
+	      <>
+                <DataPoint>
+                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
+                </DataPoint>
+              <ResultsBanner>
+                Election results data will become available after polls close.
+             </ResultsBanner>
+	      </>
+              )}
+            </PageHeader>
+          </Container>
+          <Container>
+            <Contests>
+              {election.contests.map(
+                ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
                   const contestVotes = sumCandidateVotes(
-                      results.contests[contestId].candidates
+                    results.contests[contestId].candidates
                   )
                   const writeIn = {
-                      id: 'writeIn',
-                      name: 'Write-In',
-                      partyId: ''
+                    id: 'writeIn',
+                    name: 'Write-In',
+                    partyId: ''
                   }
                   const candidates = [
-                      ...contestCandidates,
-                      writeIn,
+                    ...contestCandidates,
+                    writeIn,
                   ]
                   return (
                     <Contest key={contestId}>
                       <Row>
-                          <div>
-                            <ContestSection>{section}</ContestSection>
-                            <ContestTitle>{title}</ContestTitle>
-                          </div>
-                          <CandidateDataColumn>
-                            <CandidateDetail>
-                                {seats} winner
-                            </CandidateDetail>
-                          </CandidateDataColumn>
+                        <div>
+                          <ContestSection>{section}</ContestSection>
+                          <ContestTitle>{title}</ContestTitle>
+                        </div>
+                        <CandidateDataColumn>
+                          <CandidateDetail>
+                            {seats} winner
+                          </CandidateDetail>
+                        </CandidateDataColumn>
                       </Row>
                       <div>
                         {candidates
-                        .sort((a, b) =>
-                          results.contests[contestId].candidates[b.id]
-                          - results.contests[contestId].candidates[a.id]
-                        )
-                        .map(({ id: candidateId, name, partyId }) => {
-                        const candidateVotes =
-                          results.contests[contestId].candidates[candidateId]
-                        return (
-                          <Candidate key={candidateId}>
-                            <CandidateProgressBar>
+                          .sort((a, b) =>
+                            results.contests[contestId].candidates[b.id]
+                            - results.contests[contestId].candidates[a.id]
+                          )
+                          .map(({ id: candidateId, name, partyId }) => {
+                          const candidateVotes =
+                            results.contests[contestId].candidates[candidateId]
+                          return (
+                            <Candidate key={candidateId}>
+                              <CandidateProgressBar>
                                 <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
-                            </CandidateProgressBar>
-                            <CandidateRow data-percentage="50%">
-                              <CandidateDataColumn>
-                                <CandidateMain as="h3">{name}</CandidateMain>
-                                <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
-                              </CandidateDataColumn>
-                              <CandidateDataColumn>
-                                <CandidateMain>
+                              </CandidateProgressBar>
+                              <CandidateRow data-percentage="50%">
+                                <CandidateDataColumn>
+                                  <CandidateMain as="h3">{name}</CandidateMain>
+                                  <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
+                                </CandidateDataColumn>
+                                <CandidateDataColumn>
+                                  <CandidateMain>
                                     {formatPercentage(candidateVotes, contestVotes)}
-                                </CandidateMain>
-                                <CandidateDetail>{candidateVotes} votes</CandidateDetail>
-                              </CandidateDataColumn>
-                            </CandidateRow>
-                          </Candidate>
-                        )
+                                  </CandidateMain>
+                                  <CandidateDetail>{candidateVotes} votes</CandidateDetail>
+                                </CandidateDataColumn>
+                              </CandidateRow>
+                            </Candidate>
+                          )
                         })}
                       </div>
                     </Contest>
-                  )}
-                )}
-              </Contests>
-            </Container>
-            <Container>
-              <Refresh>This page will automatically refresh when new results data are available.</Refresh>
-            </Container>
-            <PoweredBy />
+                  )
+                }
+              )}
+            </Contests>
+          </Container>
+          <Container>
+            <Refresh>This page will automatically refresh when new results data are available.</Refresh>
+          </Container>
+          <PoweredBy />
         </React.Fragment>
       )}
       {currentPage === 'info' && (
         <React.Fragment>
           <Container>
             <PageHeader>
-            <ElectionTitle as="h1">{election.title}</ElectionTitle>
-            <ElectionDate>
+              <ElectionTitle as="h1">{election.title}</ElectionTitle>
+              <ElectionDate>
                 <NoWrap>{electionDayPhrase}</NoWrap>{' '}
                 <NoWrap>{pollsOpenPhrase}</NoWrap>{' '}
-            </ElectionDate>
-            <PrecinctsHeading>Local Precincts</PrecinctsHeading>
-            <ElectionDate>
+              </ElectionDate>
+              <PrecinctsHeading>Local Precincts</PrecinctsHeading>
+              <ElectionDate>
                 If you don’t know your polling place, please call the City of Vicksburg’s City Clerk’s Office at <NoWrap as="a" href="tel:+16016344553">601-634-4553</NoWrap>.
-            </ElectionDate>
+              </ElectionDate>
             </PageHeader>
             <PrecinctsList>
-            {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
-              <Precinct key={precinctId}>
-                <PrecinctName>{name}</PrecinctName>
-                <PrecinctAddress>
-                  {address ? (
-                  <a href={`https://maps.google.com/?q=${address}`}>
-                      {address.split(',')[0]}
-                  </a>
-                  ) : (
-                  <em>no address provided</em>
-                  )}
-                </PrecinctAddress>
-                <SampleBallots>
-                  {
-                  election.ballotStyles
-                      .filter((bs) => bs.precincts.includes(precinctId))
-                      .map((bs) => (
-                      <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
-                      ))
-                  }
-                </SampleBallots>
-              </Precinct>
-            ))}
+              {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
+                <Precinct key={precinctId}>
+                  <PrecinctName>{name}</PrecinctName>
+                  <PrecinctAddress>
+                    {address ? (
+                      <a href={`https://maps.google.com/?q=${address}`}>
+                        {address.split(',')[0]}
+                      </a>
+                    ) : (
+                      <em>no address provided</em>
+                    )}
+                  </PrecinctAddress>
+                  <SampleBallots>
+                    {
+                      election.ballotStyles
+                        .filter((bs) => bs.precincts.includes(precinctId))
+                        .map((bs) => (
+                          <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
+                        ))
+                    }
+                  </SampleBallots>
+                </Precinct>
+              ))}
             </PrecinctsList>
           </Container>
           <PoweredBy />
         </React.Fragment>
       )}
-    </div>
+    </HomeScreenContainer>
   )
 }
 
-const HomeScreen: React.FC = (props: any) => {
-  const auth = useAuthDataContext()
-
-  if (auth === null) return null // Still loading
-
-  const { user } = auth
-  if (!user) return (
-    <LoginScreen redirectURLOnSuccess={ props.location.state ? props.location.state.from.pathname : props.location.pathname } />)
-
-  return (<ElectionNightReporting />)
+const HomeScreen: React.FC = () => {
+  return <ElectionNightReporting />
 }
 
-export default HomeScreen 
+export default HomeScreen

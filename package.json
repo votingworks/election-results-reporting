@@ -5,11 +5,6 @@
     "build": "yarn --cwd client install && yarn --cwd client build",
     "heroku-postbuild": "yarn build"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": ""
-    }
-  },
   "lint-staged": {
     "*.+(css|graphql|json|less|md|mdx|sass|scss|yaml|yml)": [
       "prettier --write"
@@ -23,7 +18,7 @@
     ]
   },
   "devDependencies": {
-    "husky": "^4.2.3",
+    "husky": "4",
     "lint-staged": "^10.2.2",
     "prettier": "^1.19.1",
     "sort-package-json": "^1.40.0"
