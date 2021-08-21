@@ -12,11 +12,11 @@ try:
     d = ""
     noAuthPath = ""
 
-    print("Running script to setup local Arlo instance...")
+    print("Running script to setup local Electing Results Reporting instance...")
     print()
 
     print(
-        "If this is your first time running Arlo, we recommend that you answer\n"
+        "If this is your first time running Election Results Reporting, we recommend that you answer\n"
         + "no to the following question and follow the steps to use VotingWorks'\n"
         + "instance of nOAuth.\n"
     )
@@ -75,7 +75,7 @@ try:
 
             res = input("Would you like to run nOAuth? [Y/n]")
             if res == "n":
-                print("Please see README for running Arlo with custom nOAuth.")
+                print("Please see README for running Election Results Reporting with custom nOAuth.")
                 sys.exit(0)
 
             port = ""
@@ -106,22 +106,22 @@ try:
             children.append(child)
             nOAuthAddr = "http://localhost:{}".format(port)
 
-    print("Configuring arlo environment")
-    os.environ["ARLO_AUDITADMIN_AUTH0_BASE_URL"] = nOAuthAddr
-    os.environ["ARLO_JURISDICTIONADMIN_AUTH0_BASE_URL"] = nOAuthAddr
+    print("Configuring Election Results Reporting environment")
+    os.environ["ERR_AUDITADMIN_AUTH0_BASE_URL"] = nOAuthAddr
+    os.environ["ERR_JURISDICTIONADMIN_AUTH0_BASE_URL"] = nOAuthAddr
 
-    os.environ["ARLO_AUDITADMIN_AUTH0_CLIENT_ID"] = "test"
-    os.environ["ARLO_JURISDICTIONADMIN_AUTH0_CLIENT_ID"] = "test"
+    os.environ["ERR_AUDITADMIN_AUTH0_CLIENT_ID"] = "test"
+    os.environ["ERR_JURISDICTIONADMIN_AUTH0_CLIENT_ID"] = "test"
 
-    os.environ["ARLO_AUDITADMIN_AUTH0_CLIENT_SECRET"] = "secret"
-    os.environ["ARLO_JURISDICTIONADMIN_AUTH0_CLIENT_SECRET"] = "secret"
+    os.environ["ERR_AUDITADMIN_AUTH0_CLIENT_SECRET"] = "secret"
+    os.environ["ERR_JURISDICTIONADMIN_AUTH0_CLIENT_SECRET"] = "secret"
 
-    os.environ["ARLO_SESSION_SECRET"] = "secret"
-    os.environ["ARLO_HTTP_ORIGIN"] = "http://localhost:3000"
+    os.environ["ERR_SESSION_SECRET"] = "secret"
+    os.environ["ERR_HTTP_ORIGIN"] = "http://localhost:3000"
 
     res = input(
-        "Would you like to install the Arlo dev environment?\n"
-        + "If this is your first run of Arlo after download, you should do this. [y/N]"
+        "Would you like to install the Election Results Reporting dev environment?\n"
+        + "If this is your first run of Election Results Reporting after download, you should do this. [y/N]"
     )
 
     if res == "y":
@@ -159,7 +159,7 @@ try:
         check=True,
     )
 
-    print("Running Arlo. Happy auditing!")
+    print("Running Election Results Reporting. Happy auditing!")
     subprocess.run(["./run-dev.sh"], check=True)
 
 

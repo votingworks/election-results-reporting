@@ -83,12 +83,12 @@ const Header: React.FC<{}> = () => {
             <Link to="/">
               <img
                 src="/arlo.png"
-                alt="Arlo, by VotingWorks"
+                alt="Election Results Reporting, by VotingWorks"
                 className="logo-desktop"
               />
               <img
                 src="/arlo-mobile.png"
-                alt="Arlo, by VotingWorks"
+                alt="Election Results Reporting, by VotingWorks"
                 className="logo-mobile"
               />
             </Link>

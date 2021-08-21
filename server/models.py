@@ -133,9 +133,9 @@ class Election(BaseModel):
     risk_limit = Column(Integer)
     random_seed = Column(String(100))
 
-    # An audit is "online" if each ballot's audit results are entered in Arlo
+    # An audit is "online" if each ballot's audit results are entered in Election Results Reporting
     # individually, vs. written in a tally sheet and then totaled before
-    # submitting to Arlo.
+    # submitting to Election Results Reporting.
     online = Column(Boolean, nullable=False)
 
     # Who does this election belong to?

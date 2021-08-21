@@ -45,7 +45,7 @@ const LoginScreen: React.FC<ILoginScreenProps> = ({ successRedirect }: ILoginScr
 
   return (
     <LoginWrapper>
-      <img height="50px" src="/arlo.png" alt="Arlo, by VotingWorks" />
+      <img height="50px" src="/arlo.png" alt="Election Results Reporting, by VotingWorks" />
       {query.get('error') && (
         <Callout intent="danger" style={{ margin: '20px 0 20px 0' }}>
           {query.get('message')}

@@ -9,8 +9,8 @@ import App from './App'
 import * as serviceWorker from './serviceWorker'
 
 Sentry.init({
-  dsn: (window as any)._arlo_sentry_dsn, // eslint-disable-line @typescript-eslint/no-explicit-any
-  environment: (window as any)._arlo_flask_env, // eslint-disable-line @typescript-eslint/no-explicit-any
+  dsn: (window as any)._err_sentry_dsn, // eslint-disable-line @typescript-eslint/no-explicit-any
+  environment: (window as any)._err_flask_env, // eslint-disable-line @typescript-eslint/no-explicit-any
   integrations: [new Integrations.BrowserTracing()],
   tracesSampleRate: 0.2,
 })

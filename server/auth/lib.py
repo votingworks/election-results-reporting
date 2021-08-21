@@ -112,7 +112,7 @@ def check_access(
     # Check user type is allowed
     user_type, user_key = get_loggedin_user(session)
     if not user_key:
-        raise Unauthorized("Please log in to access Arlo")
+        raise Unauthorized("Please log in to access Election Results Reporting")
 
     if user_type not in user_types:
         raise Forbidden(f"Access forbidden for user type {user_type}")

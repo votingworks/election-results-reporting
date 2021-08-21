@@ -29,8 +29,8 @@ def setup_flask_config() -> Tuple[str, bool]:
 FLASK_ENV, FLASK_DEBUG = setup_flask_config()
 
 
-DEVELOPMENT_DATABASE_URL = "postgresql://arlo:arlo@localhost:5432/arlo"
-TEST_DATABASE_URL = "postgresql://arlo:arlo@localhost:5432/arlotest"
+DEVELOPMENT_DATABASE_URL = "postgresql://err:err@localhost:5432/err"
+TEST_DATABASE_URL = "postgresql://err:err@localhost:5432/errtest"
 
 
 def read_database_url_config() -> str:
@@ -56,15 +56,15 @@ STATIC_FOLDER = os.path.normpath(
 
 
 def read_session_secret() -> str:
-    session_secret = os.environ.get("ARLO_SESSION_SECRET", None)
+    session_secret = os.environ.get("ERR_SESSION_SECRET", None)
 
     if not session_secret:
         if FLASK_ENV in DEVELOPMENT_ENVS:
             # Allow omitting in development, use a fixed secret instead.
-            session_secret = f"arlo-{FLASK_ENV}-session-secret-v1"
+            session_secret = f"err-{FLASK_ENV}-session-secret-v1"
         else:
             raise Exception(
-                "ARLO_SESSION_SECRET env var for managing sessions is missing"
+                "ERR_SESSION_SECRET env var for managing sessions is missing"
             )
 
     return session_secret
@@ -79,7 +79,7 @@ SESSION_INACTIVITY_TIMEOUT = timedelta(hours=1)
 
 
 def read_http_origin() -> str:
-    http_origin = os.environ.get("ARLO_HTTP_ORIGIN", None)
+    http_origin = os.environ.get("ERR_HTTP_ORIGIN", None)
 
     if not http_origin:
         if FLASK_ENV in DEVELOPMENT_ENVS:
@@ -90,7 +90,7 @@ def read_http_origin() -> str:
             http_origin = f"https://{os.environ.get('HEROKU_APP_NAME')}.herokuapp.com"
         else:
             raise Exception(
-                "ARLO_HTTP_ORIGIN env var, e.g. https://arlo.example.com, is missing"
+                "ERR_HTTP_ORIGIN env var, e.g. https://err.example.com, is missing"
             )
 
     return http_origin
@@ -101,10 +101,10 @@ HTTP_ORIGIN = read_http_origin()
 
 def read_support_auth0_creds() -> Tuple[str, str, str, str]:
     return (
-        os.environ.get("ARLO_SUPPORT_AUTH0_BASE_URL", ""),
-        os.environ.get("ARLO_SUPPORT_AUTH0_CLIENT_ID", ""),
-        os.environ.get("ARLO_SUPPORT_AUTH0_CLIENT_SECRET", ""),
-        os.environ.get("ARLO_SUPPORT_EMAIL_DOMAIN", "voting.works"),
+        os.environ.get("ERR_SUPPORT_AUTH0_BASE_URL", ""),
+        os.environ.get("ERR_SUPPORT_AUTH0_CLIENT_ID", ""),
+        os.environ.get("ERR_SUPPORT_AUTH0_CLIENT_SECRET", ""),
+        os.environ.get("ERR_SUPPORT_EMAIL_DOMAIN", "voting.works"),
     )
 
 
@@ -118,9 +118,9 @@ def read_support_auth0_creds() -> Tuple[str, str, str, str]:
 
 def read_auditadmin_auth0_creds() -> Tuple[str, str, str]:
     return (
-        os.environ.get("ARLO_AUDITADMIN_AUTH0_BASE_URL", ""),
-        os.environ.get("ARLO_AUDITADMIN_AUTH0_CLIENT_ID", ""),
-        os.environ.get("ARLO_AUDITADMIN_AUTH0_CLIENT_SECRET", ""),
+        os.environ.get("ERR_AUDITADMIN_AUTH0_BASE_URL", ""),
+        os.environ.get("ERR_AUDITADMIN_AUTH0_CLIENT_ID", ""),
+        os.environ.get("ERR_AUDITADMIN_AUTH0_CLIENT_SECRET", ""),
     )
 
 
@@ -133,9 +133,9 @@ def read_auditadmin_auth0_creds() -> Tuple[str, str, str]:
 
 def read_jurisdictionadmin_auth0_creds() -> Tuple[str, str, str]:
     return (
-        os.environ.get("ARLO_JURISDICTIONADMIN_AUTH0_BASE_URL", ""),
-        os.environ.get("ARLO_JURISDICTIONADMIN_AUTH0_CLIENT_ID", ""),
-        os.environ.get("ARLO_JURISDICTIONADMIN_AUTH0_CLIENT_SECRET", ""),
+        os.environ.get("ERR_JURISDICTIONADMIN_AUTH0_BASE_URL", ""),
+        os.environ.get("ERR_JURISDICTIONADMIN_AUTH0_CLIENT_ID", ""),
+        os.environ.get("ERR_JURISDICTIONADMIN_AUTH0_CLIENT_SECRET", ""),
     )
 
 
@@ -147,11 +147,11 @@ def read_jurisdictionadmin_auth0_creds() -> Tuple[str, str, str]:
 
 
 def setup_minerva():
-    "Configure round size growth from $ARLO_MINERVA_MULTIPLE (a float) if given, otherwise 1.5"
+    "Configure round size growth from $ERR_MINERVA_MULTIPLE (a float) if given, otherwise 1.5"
 
-    arlo_minerva_multiple = os.environ.get("ARLO_MINERVA_MULTIPLE", "1.5")
+    err_minerva_multiple = os.environ.get("ERR_MINERVA_MULTIPLE", "1.5")
 
-    return float(arlo_minerva_multiple)
+    return float(err_minerva_multiple)
 
 
 MINERVA_MULTIPLE = setup_minerva()
@@ -166,7 +166,7 @@ RUN_BACKGROUND_TASKS_IMMEDIATELY = bool(
 
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("arlo.config")
+logger = logging.getLogger("err.config")
 
 logger.info(f"{DATABASE_URL=}")
 logger.info(f"{HTTP_ORIGIN=}")

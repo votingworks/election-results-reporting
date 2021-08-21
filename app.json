@@ -22,9 +22,9 @@
       "size": "standard-1x"
     }
   },
-  "name": "arlo",
+  "name": "election-results-reporting",
   "scripts": {
-    "postdeploy": "heroku pg:backups:restore vx-arlo-staging:: -a $HEROKU_APP_NAME --confirm $HEROKU_APP_NAME"
+    "postdeploy": "heroku pg:backups:restore vx-err-staging:: -a $HEROKU_APP_NAME --confirm $HEROKU_APP_NAME"
   },
   "stack": "heroku-18"
 }

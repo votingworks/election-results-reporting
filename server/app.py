@@ -23,7 +23,7 @@ if FLASK_ENV not in DEVELOPMENT_ENVS:
     # throw an exception if it doesn't match one of the values in this list.
     Request.trusted_hosts = [str(urlparse(HTTP_ORIGIN).hostname)]  # pragma: no cover
 
-app = Flask("arlo", static_folder=None, template_folder=STATIC_FOLDER)
+app = Flask("election-results-reporting", static_folder=None, template_folder=STATIC_FOLDER)
 app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
 app.testing = FLASK_ENV == "test"
 T = Talisman(
