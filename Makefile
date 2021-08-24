@@ -1,4 +1,4 @@
-## Initial setup (windows):
+## Dependency setup (Windows OS):
 # download python-3.8.11 windows installer from https://github.com/adang1345/PythonWindows/tree/master/3.8.11
 # https://github.com/adang1345/PythonWindows/raw/master/3.8.11/python-3.8.11-amd64.exe
 # download nodejs from https://nodejs.org/dist/latest-v10.x/
@@ -25,8 +25,8 @@ install:
 
 install-development:
 	poetry install
-	yarn install
-	yarn --cwd client install
+	yarn install & yarn upgrade
+	yarn --cwd client install & yarn upgrade
 
 resettestdb:
 	FLASK_ENV=test make resetdb

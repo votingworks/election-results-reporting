@@ -1,62 +1,21 @@
-import React from 'react'
-import { ButtonGroup } from '@blueprintjs/core'
+import React, { useState } from 'react'
+import { toast } from 'react-toastify'
+import { ButtonGroup, FileInput } from '@blueprintjs/core'
 import styled from 'styled-components'
 import { Formik, FormikProps, Field } from 'formik'
 import LinkButton from './Atoms/LinkButton'
 import FormSection from './Atoms/Form/FormSection'
 import FormButton from './Atoms/Form/FormButton'
+import { ErrorLabel } from './Atoms/Form/_helpers'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 import FormField from './Atoms/Form/FormField'
-import CSVFile, { IFileInfo } from './CSVForm/index'
-import { isNullishCoalesce } from 'typescript'
-
-interface IValues {
-  id: string,
-  electionName: string,
-  electionDate: Date | string,
-  pollsOpen: TimeRanges | string,
-  pollsClose: TimeRanges | string,
-  timezone: string,
-  certificationDate: Date | string,
-  participatingJurisdictions: File | null,
-  electionDefinition: File | null
-}
-
-const activeElections: IValues[] = [
-  {
-    id: '0',
-    electionName: 'Election 1',
-    electionDate: new Date(),
-    pollsOpen: new Date().getHours().toString()+':'+new Date().getMinutes().toString(),
-    pollsClose: (new Date().getHours()+3).toString()+':'+new Date().getMinutes().toString(),
-    timezone: 'CST',
-    certificationDate: new Date(),
-    participatingJurisdictions: null,
-    electionDefinition: null,
-  },
-  {
-    id: '1',
-    electionName: 'Sample Election 2',
-    electionDate: new Date(),
-    pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
-    pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
-    timezone: 'UTC',
-    certificationDate: new Date(),
-    participatingJurisdictions: null,
-    electionDefinition: null,
-  },
-  {
-    id: '2',
-    electionName: 'Sample 3',
-    electionDate: new Date(),
-    pollsOpen: new Date().getHours()+':'+new Date().getMinutes(),
-    pollsClose: (new Date().getHours()+3)+':'+new Date().getMinutes(),
-    timezone: 'IST',
-    certificationDate: new Date(),
-    participatingJurisdictions: null,
-    electionDefinition: null,
-  }
-]
+import { sortBy } from '../utils/array'
+import { api } from './utilities'
+import {
+  useAuthDataContext,
+  IAuditAdmin,
+  IElection
+} from './UserContext'
 
 const CreateElectionWrapper = styled.div`
   width: 100%;
@@ -83,33 +42,64 @@ const InlineLabel = styled.label`
   }
 `
 
-const CreateElection: React.FC = () => {
-  const jurisdictionsFile: IFileInfo = {
-    file: null,
-    processing: null,
+const CreateElection = ({ user }: { user: IAuditAdmin }) => {
+  const [submitting, setSubmitting] = useState(false)
+
+  interface IObjectIterableValues extends IElection {
+    readonly [key: string]: any;
   }
 
-  const electionDefinition: IFileInfo = {
-    file: null,
-    processing: null,
+  const onSubmit = async (newElection: IObjectIterableValues) => {
+    setSubmitting(true)
+    const formData: FormData = new FormData()
+
+    for (const key in newElection) {
+      if (key !== 'jurisdictions' && key!=='electionDefinition' ) {
+        formData.append(key, newElection[key])
+      }
+    }
+    formData.append(
+      'jurisdictions', 
+      newElection.jurisdictions as Blob,
+      ( (newElection.jurisdictions && newElection.jurisdictions.name ) ? newElection.jurisdictions.name : undefined )
+    )
+
+    const response: { status: string } | null = await api('/election', {
+      method: 'POST',
+      body: formData
+    })
+    if (response && response.status === 'ok') {
+      // if response refresh page
+      window.location.reload()
+    } else {
+      setSubmitting(false)
+      toast.error("Err, Couldn't create election! Try Again")
+    }
   }
 
   return (
     <Formik
-      onSubmit={() => console.log('submitted')}
+      onSubmit={onSubmit}
       initialValues={{
         id: '',
         electionName: '',
+        organizationId: user.organizations[0].id,
         electionDate: '',
         pollsOpen: '',
         pollsClose: '',
-        timezone: '',
+        pollsTimezone: '',
         certificationDate: '',
-        participatingJurisdictions: null,
+        jurisdictions: null,
         electionDefinition: null,
       }}
     >
-      {({ setFieldValue, setValues, values }: FormikProps<IValues>) => (
+      {({ 
+        handleSubmit,
+        setFieldValue,
+        values,
+        errors,
+        touched
+      }: FormikProps<IElection>) => (
         <CreateElectionWrapper>
           <h2>Create New Election</h2>
           <FormSection>
@@ -159,11 +149,11 @@ const CreateElection: React.FC = () => {
                 component={InlineFormField}
               />
             </InlineLabel>
-            <InlineLabel htmlFor="timezone">
+            <InlineLabel htmlFor="pollsTimezone">
               <p>Timezone</p>
               <Field
-                id="timezone"
-                name="timezone"
+                id="pollsTimezone"
+                name="pollsTimezone"
                 type="text"
                 validate={(v: string) => (v ? undefined : 'Required')}
                 placeholder="CST"
@@ -185,27 +175,40 @@ const CreateElection: React.FC = () => {
             </label>
           </FormSection>
           <FormSection>
-            <CSVFile
-              csvFile={jurisdictionsFile}
-              uploadCSVFile={() => Promise.resolve(true)}
-              title="Participating Jurisdictions"
-              description=""
-              sampleFileLink=""
-              enabled
-            />
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            <label htmlFor="jurisdictions">
+              <p>Participating Jurisdictions</p>
+              <FileInput
+                inputProps={{
+                  accept: '.csv',
+                  name: 'jurisdictions',
+                }}
+                onInputChange={e => {
+                  setFieldValue(
+                    'jurisdictions',
+                    (e.currentTarget.files && e.currentTarget.files[0]) ||
+                      undefined
+                  )
+                }}
+                hasSelection={!!values.jurisdictions}
+                text={values.jurisdictions ? values.jurisdictions.name : 'Select a CSV...'}
+                // disabled={isSubmitting || isProcessing || !enabled}
+                fill
+              />
+               { errors.jurisdictions && touched.jurisdictions && (
+                  <ErrorLabel>{errors.jurisdictions}</ErrorLabel>
+                )}
+            </label>
           </FormSection>
-          <FormSection>
-            <CSVFile
-              csvFile={electionDefinition}
-              uploadCSVFile={() => Promise.resolve(true)}
-              title="Election Definition"
-              description=""
-              sampleFileLink=""
-              enabled
-            />
-          </FormSection>
-          <FormButton type="submit" intent="primary" fill large>
-            Create new election
+          <FormButton
+            type="button"
+            intent="primary"
+            fill
+            large
+            onClick={handleSubmit}
+            loading={submitting}
+          >
+            Create New Election
           </FormButton>
         </CreateElectionWrapper>
       )}
@@ -214,36 +217,42 @@ const CreateElection: React.FC = () => {
   )
 }
 
-const ActiveElections = () => {
-  const ActiveElectionsWrapper = styled.div`
-    width: 100%;
-    padding: 30px;
-  `
+const ActiveElectionsWrapper = styled.div`
+  width: 100%;
+  padding: 30px;
+`
 
+const ActiveElections = () => {
   return (
     <ActiveElectionsWrapper>
       <h2>Active Elections</h2>
-      {activeElections.length === 0 ? (
-        <p>You haven&apos;t created any elections yet</p>
-      ) : (
-        activeElections.map(elec => (
-          <ButtonGroup
-            key={elec.id}
-            fill
-            large
-            style={{ marginBottom: '15px' }}
-          >
-            <LinkButton
-              style={{ justifyContent: 'start' }}
-              to="#"
-              intent="primary"
-              fill
-            >
-              {elec.electionName}
-            </LinkButton>
-          </ButtonGroup>
-        ))
-      )}
+      {sortBy(user.organizations, o => o.name).map(organization => (
+        <div key={organization.id}>
+          {organization.elections.length === 0 ? (
+            <p>
+              You haven&apos;t created any elections yet for {organization.name}
+            </p>
+          ) : (
+            sortBy(organization.elections, e => e.electionName).map(election => (
+              <ButtonGroup
+                key={election.id}
+                fill
+                large
+                style={{ marginBottom: '15px' }}
+              >
+                <LinkButton
+                  style={{ justifyContent: 'start' }}
+                  to='#'
+                  intent='primary'
+                  fill
+                >
+                  {election.electionName}
+                </LinkButton>
+              </ButtonGroup>
+            ))
+          )}
+        </div>
+      ))}
     </ActiveElectionsWrapper>
   )
 }
@@ -259,12 +268,25 @@ const ResponsiveInner = styled(Inner)`
   }
 `
 
-const ElectionScreen: React.FC = () =>
-  <Wrapper>
-    <ResponsiveInner>
-      <CreateElection />
-      <ActiveElections />
-    </ResponsiveInner>
-  </Wrapper>
+const ElectionScreen: React.FC = () => {
+  const auth = useAuthDataContext()
+
+  if (auth === null || auth.user === null) return null // Still loading
+
+  if (auth.user && auth.user.type !== 'audit_admin') {
+    return null
+  }
+
+  const { user } = auth
+
+  return (
+    <Wrapper>
+      <ResponsiveInner>
+        <CreateElection user={ user } />
+        <ActiveElections user={ user } />
+      </ResponsiveInner>
+    </Wrapper>
+  )
+}
 
 export default ElectionScreen

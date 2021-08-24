@@ -1,6 +1,6 @@
 {
   "files.exclude": {
-    "client": false
+    "client": true
   },
   "python.linting.pylintEnabled": true
 }

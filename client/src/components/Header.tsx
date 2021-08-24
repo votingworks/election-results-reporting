@@ -14,6 +14,7 @@ import {
   Position,
   Colors
 } from '@blueprintjs/core'
+import LinkButton from './Atoms/LinkButton'
 import { useAuthDataContext } from './UserContext'
 import { Inner } from './Atoms/Wrapper'
 
@@ -60,7 +61,7 @@ const InnerBar = styled(Inner)`
   }
 `
 
-const ButtonLink = styled.a`
+const CustomMenuItem = styled(MenuItem)`
   text-decoration: none;
   color: inherit;
   :hover {
@@ -94,12 +95,12 @@ const Header: React.FC<{}> = () => {
             </Link>
           </NavbarHeading>
           <NavbarDivider />
-          <ButtonLink href="/"><Button className="bp3-minimal" icon="home" text="Home" active={ location.pathname == '/' } /></ButtonLink>&nbsp;
+          <LinkButton to="/" icon="home" className={ `bp3-minimal ${location.pathname === '/' ? 'bp3-active' : ''}` }> Home</LinkButton>&nbsp;
           <Popover content={
             <Menu>
-              <ButtonLink href="/election/home"><MenuItem icon="edit" text="Create/View Election" active={ location.pathname == '/election/home' } /></ButtonLink>
-              <ButtonLink href="/election/results"><MenuItem icon="cloud-upload" text="Load Results Data" active={ location.pathname == '/election/results' } /></ButtonLink>
-              <ButtonLink href="/election/data"><MenuItem icon="panel-table" text="Election Data" active={ location.pathname == '/election/data' } /></ButtonLink>
+              <CustomMenuItem icon="edit" href="/election/home" text="Create/View Election" active={ location.pathname === '/election/home' } />
+              <CustomMenuItem icon="cloud-upload" href="/election/results" text="Load Results Data" active={ location.pathname === '/election/results' } />
+              <CustomMenuItem icon="panel-table" href="/election/results" text="Election Data" active={ location.pathname === '/election/data' } />
             </Menu>
           } position={ Position.BOTTOM_LEFT } minimal>
             <Button className="bp3-minimal" icon="application" rightIcon="caret-down" text="Election" active={ location.pathname.indexOf('/election/') > -1 } />
@@ -112,7 +113,7 @@ const Header: React.FC<{}> = () => {
               <Popover
                 content={
                   <Menu>
-                    <ButtonLink href="/auth/logout"><MenuItem text="Log out" icon="log-out" /></ButtonLink>
+                    <CustomMenuItem text="Log out" href="/auth/logout" icon="log-out" />
                   </Menu>
                 }
                 usePortal={false}

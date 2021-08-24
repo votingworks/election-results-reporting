@@ -14,7 +14,7 @@ def set_sentry_user():
     if election_id:
         sentry_sdk.set_tag("election_id", election_id)
         election = Election.query.get(election_id)
-        sentry_sdk.set_tag("audit_name", election and election.audit_name)
+        sentry_sdk.set_tag("election_name", election and election.election_name)
         sentry_sdk.set_tag("organization_name", election and election.organization.name)
 
 

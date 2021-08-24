@@ -11,10 +11,8 @@ from .lib import (
     set_support_user,
     clear_support_user,
     get_support_user,
-    UserType,
+    UserType
 )
-from ..api.audit_boards import serialize_members
-from ..util.isoformat import isoformat
 from ..config import (
     SUPPORT_AUTH0_BASE_URL,
     SUPPORT_AUTH0_CLIENT_ID,
@@ -71,9 +69,13 @@ auth0_ja = oauth.register(
 def serialize_election(election):
     return {
         "id": election.id,
-        "auditName": election.audit_name,
         "electionName": election.election_name,
-        "state": election.state,
+        "electionDate": election.election_date,
+        "pollsOpen": election.polls_open,
+        "pollsClose": election.polls_close,
+        "pollsTimezone": election.polls_timezone,
+        "certificationDate": election.certification_date,
+        "organizationId": election.organization_id
     }
 
 
@@ -102,27 +104,12 @@ def auth_me():
                 {
                     "id": jurisdiction.id,
                     "name": jurisdiction.name,
-                    "election": serialize_election(jurisdiction.election),
-                    "numBallots": jurisdiction.manifest_num_ballots,
+                    "election": serialize_election(jurisdiction.election)
                 }
                 for jurisdiction in db_user.jurisdictions
                 if jurisdiction.election.deleted_at is None
             ],
         )
-    elif user_type == UserType.AUDIT_BOARD:
-        audit_board = AuditBoard.query.get(user_key)
-        if audit_board.jurisdiction.election.deleted_at is None:
-            user = dict(
-                type=user_type,
-                id=audit_board.id,
-                jurisdictionId=audit_board.jurisdiction_id,
-                jurisdictionName=audit_board.jurisdiction.name,
-                electionId=audit_board.jurisdiction.election.id,
-                roundId=audit_board.round_id,
-                name=audit_board.name,
-                members=serialize_members(audit_board),
-                signedOffAt=isoformat(audit_board.signed_off_at),
-            )
 
     support_user_email = get_support_user(session)
     return jsonify(
@@ -221,22 +208,6 @@ def jurisdictionadmin_login_callback():
             session.pop("success_redirect_url", None)
 
     return redirect(success_redirect)
-
-
-@auth.route("/auditboard/<passphrase>", methods=["GET"])
-def auditboard_passphrase(passphrase: str):
-    audit_board = AuditBoard.query.filter_by(passphrase=passphrase).one_or_none()
-    if not audit_board:
-        return redirect(
-            "/?"
-            + urlencode(
-                {"error": "audit_board_not_found", "message": "Audit board not found."}
-            )
-        )
-    set_loggedin_user(session, UserType.AUDIT_BOARD, audit_board.id)
-    return redirect(
-        f"/election/{audit_board.jurisdiction.election.id}/audit-board/{audit_board.id}"
-    )
 
 
 @auth.errorhandler(OAuthError)

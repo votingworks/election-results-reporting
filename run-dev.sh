@@ -1,4 +1,18 @@
 #!/usr/bin/env bash
+# Run commands from below file only once to seed database
+# ./client/cypress/seed-test-db.sh
+run="first"
+
+if (($run == "first"))
+then
+    export FLASK_ENV=test
+    poetry run python -m scripts.cleardb
+    ORG_ID=`poetry run python -m scripts.create-org "Cypress Test Org"`
+    poetry run python -m scripts.create-admin $ORG_ID "audit-admin-cypress@example.com"
+    sed -i -e 's/run="notfirst"/run="notfirst"/g' ./run-dev.sh
+fi
+
+# Below commands to be run on every app startup
 
 export ERR_AUDITADMIN_AUTH0_BASE_URL="https://votingworks-noauth.herokuapp.com"
 export ERR_JURISDICTIONADMIN_AUTH0_BASE_URL="https://votingworks-noauth.herokuapp.com"

@@ -26,4 +26,5 @@ if __name__ == "__main__":
     print("stamping latest migration revision...")
     # Following recipe: https://alembic.sqlalchemy.org/en/latest/cookbook.html#building-an-up-to-date-database-from-scratch
     alembic_cfg = Config(os.path.join(os.path.dirname(__file__), "../alembic.ini"))
-    alembic_cfg.set_main_option("sqlalchemy.url", s
+    alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
+    command.stamp(alembic_cfg, "head")

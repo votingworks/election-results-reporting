@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react'
-
-import 'react-toastify/dist/ReactToastify.css'
 import dashify from 'dashify'
 import styled from 'styled-components'
 

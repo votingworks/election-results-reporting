@@ -5,7 +5,7 @@ import {
   Switch,
   useLocation
 } from 'react-router-dom'
-
+import 'react-toastify/dist/ReactToastify.css'
 import { AnchorButton, Card, Callout } from '@blueprintjs/core'
 import './App.css'
 import 'react-toastify/dist/ReactToastify.css'

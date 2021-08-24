@@ -146,16 +146,6 @@ def read_jurisdictionadmin_auth0_creds() -> Tuple[str, str, str]:
 ) = read_jurisdictionadmin_auth0_creds()
 
 
-def setup_minerva():
-    "Configure round size growth from $ERR_MINERVA_MULTIPLE (a float) if given, otherwise 1.5"
-
-    err_minerva_multiple = os.environ.get("ERR_MINERVA_MULTIPLE", "1.5")
-
-    return float(err_minerva_multiple)
-
-
-MINERVA_MULTIPLE = setup_minerva()
-
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
 
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
@@ -171,12 +161,3 @@ logger = logging.getLogger("err.config")
 logger.info(f"{DATABASE_URL=}")
 logger.info(f"{HTTP_ORIGIN=}")
 logger.info(f"{FLASK_ENV=}")
-
-
-def filter_athena_messages(record):
-    "Filter out any logging messages from athena/audit.py, in preference to our tighter logging"
-
-    return not record.pathname.endswith("athena/audit.py")
-
-
-logging.getLogger().addFilter(filter_athena_messages)

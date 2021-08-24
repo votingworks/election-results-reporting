@@ -8,10 +8,16 @@ import React, {
 import { api } from './utilities'
 
 export interface IElection {
-  id: string
-  auditName: string
-  electionName: string
-  state: string
+  id: string,
+  organizationId: string,
+  electionName: string,
+  electionDate: Date | string,
+  pollsOpen: TimeRanges | string,
+  pollsClose: TimeRanges | string,
+  pollsTimezone: string,
+  certificationDate: Date | string,
+  jurisdictions: File | null,
+  electionDefinition: File | null
 }
 
 export interface IOrganization {
@@ -24,7 +30,6 @@ export interface IJurisdiction {
   id: string
   name: string
   election: IElection
-  numBallots: number | null
 }
 
 export interface IAuditBoardMember {
