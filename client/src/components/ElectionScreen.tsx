@@ -13,7 +13,7 @@ import { sortBy } from '../utils/array'
 import { api } from './utilities'
 import {
   useAuthDataContext,
-  IAuditAdmin,
+  IAdmin,
   IElection
 } from './UserContext'
 
@@ -42,7 +42,7 @@ const InlineLabel = styled.label`
   }
 `
 
-const CreateElection = ({ user }: { user: IAuditAdmin }) => {
+const CreateElection = ({ user }: { user: IAdmin }) => {
   const [submitting, setSubmitting] = useState(false)
 
   interface IObjectIterableValues extends IElection {
@@ -222,7 +222,7 @@ const ActiveElectionsWrapper = styled.div`
   padding: 30px;
 `
 
-const ActiveElections = () => {
+const ActiveElections = ({ user }: { user: IAdmin }) => {
   return (
     <ActiveElectionsWrapper>
       <h2>Active Elections</h2>
@@ -273,7 +273,7 @@ const ElectionScreen: React.FC = () => {
 
   if (auth === null || auth.user === null) return null // Still loading
 
-  if (auth.user && auth.user.type !== 'audit_admin') {
+  if (auth.user && auth.user.type !== 'admin') {
     return null
   }
 

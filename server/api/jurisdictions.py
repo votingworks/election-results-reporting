@@ -19,7 +19,7 @@ class JurisdictionStatus(str, enum.Enum):
 
 
 @api.route("/election/<election_id>/jurisdiction/file", methods=["GET"])
-@restrict_access([UserType.AUDIT_ADMIN])
+@restrict_access([UserType.ADMIN])
 def get_jurisdictions_file(election: Election):
     return jsonify(
         file=serialize_file(election.jurisdictions_file),
@@ -32,7 +32,7 @@ ADMIN_EMAIL = "Admin Email"
 
 
 @api.route("/election/<election_id>/jurisdiction/file", methods=["PUT"])
-@restrict_access([UserType.AUDIT_ADMIN])
+@restrict_access([UserType.ADMIN])
 def update_jurisdictions_file(election: Election):
     if "jurisdictions" not in request.files:
         raise BadRequest("Missing required file parameter 'jurisdictions'")

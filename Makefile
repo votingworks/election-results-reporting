@@ -14,8 +14,8 @@ deps:
 
 # this should only be used for development
 initdevdb:
-	sudo -u postgres psql -c "create user err superuser password 'err';"
-	sudo -u postgres psql -c "create database err with owner err;"
+	sudo -u postgres psql -c "create user elrep superuser password 'elrep';"
+	sudo -u postgres psql -c "create database elrep with owner elrep;"
 
 install:
 	poetry install --no-dev

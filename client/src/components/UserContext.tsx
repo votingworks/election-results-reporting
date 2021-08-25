@@ -32,25 +32,8 @@ export interface IJurisdiction {
   election: IElection
 }
 
-export interface IAuditBoardMember {
-  name: string
-  affiliation: string | null
-}
-
-export interface IAuditBoard {
-  type: 'audit_board'
-  id: string
-  name: string
-  jurisdictionId: string
-  jurisdictionName: string
-  electionId: string
-  roundId: string
-  members: IAuditBoardMember[]
-  signedOffAt: string | null
-}
-
-export interface IAuditAdmin {
-  type: 'audit_admin'
+export interface IAdmin {
+  type: 'admin'
   name: string
   email: string
   organizations: IOrganization[]
@@ -65,7 +48,7 @@ export interface IJurisdictionAdmin {
   jurisdictions: IJurisdiction[]
 }
 
-export type IUser = IAuditAdmin | IJurisdictionAdmin | IAuditBoard
+export type IUser = IAdmin | IJurisdictionAdmin
 
 export interface ISupportUser {
   email: string

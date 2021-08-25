@@ -140,7 +140,7 @@ disable=print-statement,
         exception-escape,
         comprehension-escape,
         # Everything above this line came disabled by default with pylint,
-        # below are custom choices
+        # below are elrep custom choices
         unused-wildcard-import,
         redefined-builtin,
         fixme,

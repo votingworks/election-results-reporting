@@ -83,7 +83,7 @@ def serialize_election(election):
 def auth_me():
     user_type, user_key = get_loggedin_user(session)
     user = None
-    if user_type in [UserType.AUDIT_ADMIN, UserType.JURISDICTION_ADMIN]:
+    if user_type in [UserType.ADMIN, UserType.JURISDICTION_ADMIN]:
         db_user = User.query.filter_by(email=user_key).one()
         user = dict(
             type=user_type,
@@ -156,7 +156,7 @@ def support_login_callback():
         return redirect("/")
 
 
-@auth.route("/auth/auditadmin/start")
+@auth.route("/auth/admin/start")
 def auditadmin_login():
     redirect_uri = urljoin(request.host_url, AUDITADMIN_OAUTH_CALLBACK_URL)
     session["success_redirect_url"] = (
@@ -172,15 +172,17 @@ def auditadmin_login_callback():
     auth0_aa.authorize_access_token()
     resp = auth0_aa.get("userinfo")
     userinfo = resp.json()
+    success_redirect = ""
 
     if userinfo and userinfo["email"]:
         user = User.query.filter_by(email=userinfo["email"]).first()
-        if user and len(user.audit_administrations) > 0:
-            set_loggedin_user(session, UserType.AUDIT_ADMIN, userinfo["email"])
+        if user and len(user.administrations) > 0:
+            set_loggedin_user(session, UserType.ADMIN, userinfo["email"])
             success_redirect = session["success_redirect_url"]
             session.pop("success_redirect_url", None)
 
-    return redirect(success_redirect)
+            return redirect(success_redirect)
+    return jsonify(errors={ "message": "Oops, Invalid User!!" }), 400
 
 
 @auth.route("/auth/jurisdictionadmin/start")
@@ -199,6 +201,7 @@ def jurisdictionadmin_login_callback():
     auth0_ja.authorize_access_token()
     resp = auth0_ja.get("userinfo")
     userinfo = resp.json()
+    success_redirect = ""
 
     if userinfo and userinfo["email"]:
         user = User.query.filter_by(email=userinfo["email"]).first()
@@ -207,7 +210,8 @@ def jurisdictionadmin_login_callback():
             success_redirect = session["success_redirect_url"]
             session.pop("success_redirect_url", None)
 
-    return redirect(success_redirect)
+            return redirect(success_redirect)
+    return jsonify(errors={ "message": "Oops, Invalid User!!" }), 400
 
 
 @auth.errorhandler(OAuthError)

@@ -169,7 +169,7 @@ class User(BaseModel):
     external_id = Column(String(200), unique=True)
 
     organizations = relationship(
-        "Organization", secondary="audit_administration", uselist=True
+        "Organization", secondary="administration", uselist=True
     )
     jurisdictions = relationship(
         "Jurisdiction", secondary="jurisdiction_administration", uselist=True
@@ -190,10 +190,10 @@ class AuditAdministration(BaseModel):
 
     organization = relationship(
         Organization,
-        backref=backref("audit_administrations", cascade="all, delete-orphan"),
+        backref=backref("administrations", cascade="all, delete-orphan"),
     )
     user = relationship(
-        User, backref=backref("audit_administrations", cascade="all, delete-orphan")
+        User, backref=backref("administrations", cascade="all, delete-orphan")
     )
 
     __table_args__ = (PrimaryKeyConstraint("organization_id", "user_id"),)

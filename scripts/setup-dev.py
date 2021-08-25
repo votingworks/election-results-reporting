@@ -107,17 +107,17 @@ try:
             nOAuthAddr = "http://localhost:{}".format(port)
 
     print("Configuring Election Results Reporting environment")
-    os.environ["ERR_AUDITADMIN_AUTH0_BASE_URL"] = nOAuthAddr
-    os.environ["ERR_JURISDICTIONADMIN_AUTH0_BASE_URL"] = nOAuthAddr
+    os.environ["ELREP_AUDITADMIN_AUTH0_BASE_URL"] = nOAuthAddr
+    os.environ["ELREP_JURISDICTIONADMIN_AUTH0_BASE_URL"] = nOAuthAddr
 
-    os.environ["ERR_AUDITADMIN_AUTH0_CLIENT_ID"] = "test"
-    os.environ["ERR_JURISDICTIONADMIN_AUTH0_CLIENT_ID"] = "test"
+    os.environ["ELREP_AUDITADMIN_AUTH0_CLIENT_ID"] = "test"
+    os.environ["ELREP_JURISDICTIONADMIN_AUTH0_CLIENT_ID"] = "test"
 
-    os.environ["ERR_AUDITADMIN_AUTH0_CLIENT_SECRET"] = "secret"
-    os.environ["ERR_JURISDICTIONADMIN_AUTH0_CLIENT_SECRET"] = "secret"
+    os.environ["ELREP_AUDITADMIN_AUTH0_CLIENT_SECRET"] = "secret"
+    os.environ["ELREP_JURISDICTIONADMIN_AUTH0_CLIENT_SECRET"] = "secret"
 
-    os.environ["ERR_SESSION_SECRET"] = "secret"
-    os.environ["ERR_HTTP_ORIGIN"] = "http://localhost:3000"
+    os.environ["ELREP_SESSION_SECRET"] = "secret"
+    os.environ["ELREP_HTTP_ORIGIN"] = "http://localhost:3000"
 
     res = input(
         "Would you like to install the Election Results Reporting dev environment?\n"
@@ -159,7 +159,7 @@ try:
         check=True,
     )
 
-    print("Running Election Results Reporting. Happy auditing!")
+    print("Running Election Results Reporting.")
     subprocess.run(["./run-dev.sh"], check=True)
 
 

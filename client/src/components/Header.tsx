@@ -74,7 +74,7 @@ const Header: React.FC<{}> = () => {
   const location = useLocation()
   const auth = useAuthDataContext()
 
-  if (auth && auth.user && auth.user.type === 'audit_board') return null
+  if (auth && auth.user && auth.user.type === 'admin') return null
 
   return (
     <Nav>
@@ -83,12 +83,12 @@ const Header: React.FC<{}> = () => {
           <NavbarHeading>
             <Link to="/">
               <img
-                src="/arlo.png"
+                src="/elrep.png"
                 alt="Election Results Reporting, by VotingWorks"
                 className="logo-desktop"
               />
               <img
-                src="/arlo-mobile.png"
+                src="/elrep-mobile.png"
                 alt="Election Results Reporting, by VotingWorks"
                 className="logo-mobile"
               />
@@ -107,7 +107,7 @@ const Header: React.FC<{}> = () => {
           </Popover>
         </NavbarGroup>&nbsp;
         <NavbarGroup align={Alignment.RIGHT}>
-          {auth && auth.user && auth.user.type !== 'audit_board' && (
+          {auth && auth.user && (
           <>
             <UserMenu>
               <Popover

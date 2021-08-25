@@ -14,8 +14,8 @@ if __name__ == "__main__":
     if not user:
         user = User(id=str(uuid.uuid4()), email=email, external_id=email)
         db_session.add(user)
-    audit_admin = AuditAdministration(user_id=user.id, organization_id=org_id)
-    db_session.add(audit_admin)
+    admin = AuditAdministration(user_id=user.id, organization_id=org_id)
+    db_session.add(admin)
     db_session.commit()
 
     print(user.id)

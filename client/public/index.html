@@ -21,12 +21,12 @@
     // HTML page as a template. Note that when running with `yarn start` or
     // `yarn test`, this file will be served by a dev server, not through
     // Flask, so these variables can't get populated.
-    window._err_flask_env = "development"
-    window._err_sentry_dsn = ''
+    window._elrep_flask_env = "development"
+    window._elrep_sentry_dsn = ''
     // NODE_ENV is 'production' only when running `yarn build`
     if ("%NODE_ENV%" === 'production') {
-      window._err_flask_env = '{{ flask_env }}'
-      window._err_sentry_dsn = '{{ sentry_dsn }}'
+      window._elrep_flask_env = '{{ flask_env }}'
+      window._elrep_sentry_dsn = '{{ sentry_dsn }}'
     }
   </script>
 </head>

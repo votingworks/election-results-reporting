@@ -62,7 +62,7 @@ def serialize_election(election: Election) -> JSONDict:
 
 
 api.route("/election", methods=["GET"])
-@restrict_access([UserType.AUDIT_ADMIN])
+@restrict_access([UserType.ADMIN])
 def list_all_elections():
     elections = Election.query.order_by(Jurisdiction.name).all()
     json_elections = [ serialize_election(election) for election in elections ]
@@ -71,7 +71,7 @@ def list_all_elections():
 
 
 @api.route("/election", methods=["POST"])
-@restrict_access([UserType.AUDIT_ADMIN])
+@restrict_access([UserType.ADMIN])
 def create_election():
     required_fields = ["organizationId", "electionName", "electionDate", "pollsOpen", "pollsClose", "pollsTimezone", "certificationDate"]
     election = {field : request.values[field] for field in request.values if field in required_fields}
@@ -98,7 +98,7 @@ def create_election():
         contents=decode_csv_file(jurisdictions_file)
     )
 
-    check_access([UserType.AUDIT_ADMIN], election)
+    check_access([UserType.ADMIN], election)
 
     db_session.add(election)
 
@@ -113,7 +113,7 @@ def create_election():
 
 
 @api.route("/election/<election_id>", methods=["DELETE"])
-@restrict_access([UserType.AUDIT_ADMIN])
+@restrict_access([UserType.ADMIN])
 def delete_election(election: Election):
     election.deleted_at = datetime.now(timezone.utc)
 

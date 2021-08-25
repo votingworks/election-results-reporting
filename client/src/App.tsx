@@ -45,28 +45,22 @@ const LoginScreen: React.FC<ILoginScreenProps> = ({ successRedirect }: ILoginScr
 
   return (
     <LoginWrapper>
-      <img height="50px" src="/arlo.png" alt="Election Results Reporting, by VotingWorks" />
+      <img height="50px" src="/elrep.png" alt="Election Results Reporting, by VotingWorks" />
       {query.get('error') && (
         <Callout intent="danger" style={{ margin: '20px 0 20px 0' }}>
           {query.get('message')}
         </Callout>
       )}
       <Card style={{ margin: '25px 0 15px 0' }}>
-        <p>Participating in an audit in your local jurisdiction?</p>
+        <p>Log in to Election Results Reporting:</p>
         <AnchorButton
-          href={'/auth/jurisdictionadmin/start'+(successRedirect ? `?redirectOnSucess=${successRedirect}` : '')}
+          href={'/auth/admin/start'+(successRedirect ? `?redirectOnSucess=${successRedirect}` : '')}
           intent="primary"
           large
         >
-          Log in to your audit
+          Log in as Admin
         </AnchorButton>
       </Card>
-      <div>
-        <p>
-          State-level audit administrators:{' '}
-          <a href={'/auth/auditadmin/start'+(successRedirect ? `?redirectOnSucess=${successRedirect}` : '')}>Log in as an admin</a>
-        </p>
-      </div>
     </LoginWrapper>
   )
 }
@@ -76,6 +70,7 @@ const PrivateRoute: React.FC<RouteProps> = ({
   ...props
 }: RouteProps) => {
   const auth = useAuthDataContext()
+  if (auth && auth.user) console.log(auth.user)
   if (auth === null) {
     // Still loading /api/me, don't show anything
     return null

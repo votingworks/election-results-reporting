@@ -7,7 +7,7 @@
     { "url": "heroku-community/cli" }
   ],
   "env": {
-    "ERR_SESSION_SECRET": {
+    "ELREP_SESSION_SECRET": {
       "description": "A secret key for verifying the integrity of signed cookies.",
       "generator": "secret"
     }
@@ -24,7 +24,7 @@
   },
   "name": "election-results-reporting",
   "scripts": {
-    "postdeploy": "heroku pg:backups:restore vx-err-staging:: -a $HEROKU_APP_NAME --confirm $HEROKU_APP_NAME"
+    "postdeploy": "heroku pg:backups:restore vx-elrep-staging:: -a $HEROKU_APP_NAME --confirm $HEROKU_APP_NAME"
   },
   "stack": "heroku-18"
 }

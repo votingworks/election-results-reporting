@@ -1,4 +1,3 @@
-import { useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import number from '../utils/number-schema'
 import { IErrorResponse } from '../types'
@@ -42,31 +41,6 @@ export const api = async <T>(
     toast.error(err.message)
     return null
   }
-}
-
-export const apiDownload = (endpoint: string) =>
-  new Promise((resolve, reject) => {
-    try {
-      const windowObj = window.open(`/api${endpoint}`)
-      if (windowObj != null) {
-        windowObj.onbeforeunload = () => {
-          resolve('done')
-        }
-      }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(err)
-      reject(err)
-    }
-  })
-
-export const downloadFile = (fileBlob: Blob, fileName?: string) => {
-  const a = document.createElement('a')
-  document.body.appendChild(a)
-  a.href = URL.createObjectURL(fileBlob)
-  a.download = fileName || ''
-  a.click()
-  document.body.removeChild(a)
 }
 
 export const poll = (
@@ -120,16 +94,6 @@ export const testNumber = (
   }
 }
 
-export const asyncForEach = async <T>(
-  array: T[],
-  callback: (value: T, index: number, array: T[]) => Promise<void>
-) => {
-  for (let index = 0; index < array.length; index += 1) {
-    // eslint-disable-next-line no-await-in-loop
-    await callback(array[index], index, array)
-  }
-}
-
 const getErrorsFromResponse = (
   response: unknown
 ): { message: string }[] | undefined => {
@@ -159,64 +123,4 @@ export const checkAndToast = (
     return true
   }
   return false
-}
-
-// https://overreacted.io/making-setinterval-declarative-with-react-hooks/
-/* istanbul ignore next */
-export const useInterval = (
-  callback: Function,
-  delay: number | null,
-  callImmediately?: boolean
-) => {
-  const savedCallback = useRef<Function>()
-
-  // Remember the latest function.
-  useEffect(() => {
-    savedCallback.current = callback
-  }, [callback])
-
-  // Set up the interval.
-  useEffect(/* eslint consistent-return: "off" */
-  () => {
-    function tick() {
-      savedCallback.current!()
-    }
-    if (callImmediately) tick()
-    if (delay !== null) {
-      // allows for pausing
-      const id = setInterval(tick, delay)
-      return () => clearInterval(id)
-    }
-  }, [delay, callImmediately])
-}
-
-/** https://stackoverflow.com/questions/6229197/how-to-know-if-two-arrays-have-the-same-values/55614659#55614659
- * assumes array elements are primitive types
- * check whether 2 arrays are equal sets.
- * @param  {} a1 is an array
- * @param  {} a2 is an array
- */
-/* istanbul ignore next */
-export const areArraysEqualSets = (a1: unknown[], a2: unknown[]): boolean => {
-  const superSet: { [key: string]: number } = {}
-  for (const i of a1) {
-    const e = i + typeof i
-    superSet[e] = 1
-  }
-
-  for (const i of a2) {
-    const e = i + typeof i
-    if (!superSet[e]) {
-      return false
-    }
-    superSet[e] = 2
-  }
-
-  for (const e in superSet) {
-    if (superSet[e] === 1) {
-      return false
-    }
-  }
-
-  return true
 }

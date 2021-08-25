@@ -4,8 +4,3 @@ node_modules
 .mypy_cache
 .pytest_cache
 .coverage*
-
-# vim temp files
-*~
-*.swo
-*.swp
