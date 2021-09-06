@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name
 import sys, uuid
 
-from server.models import User, AuditAdministration
+from server.models import User, ElectionAdministration
 from server.database import db_session
 
 if __name__ == "__main__":
@@ -14,8 +14,8 @@ if __name__ == "__main__":
     if not user:
         user = User(id=str(uuid.uuid4()), email=email, external_id=email)
         db_session.add(user)
-    admin = AuditAdministration(user_id=user.id, organization_id=org_id)
-    db_session.add(admin)
+    election_admin = ElectionAdministration(user_id=user.id, organization_id=org_id)
+    db_session.add(election_admin)
     db_session.commit()
 
     print(user.id)

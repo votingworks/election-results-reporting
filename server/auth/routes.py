@@ -18,16 +18,16 @@ from ..config import (
     SUPPORT_AUTH0_CLIENT_ID,
     SUPPORT_AUTH0_CLIENT_SECRET,
     SUPPORT_EMAIL_DOMAIN,
-    AUDITADMIN_AUTH0_BASE_URL,
-    AUDITADMIN_AUTH0_CLIENT_ID,
-    AUDITADMIN_AUTH0_CLIENT_SECRET,
+    ELECTIONADMIN_AUTH0_BASE_URL,
+    ELECTIONADMIN_AUTH0_CLIENT_ID,
+    ELECTIONADMIN_AUTH0_CLIENT_SECRET,
     JURISDICTIONADMIN_AUTH0_BASE_URL,
     JURISDICTIONADMIN_AUTH0_CLIENT_ID,
     JURISDICTIONADMIN_AUTH0_CLIENT_SECRET,
 )
 
 SUPPORT_OAUTH_CALLBACK_URL = "/auth/support/callback"
-AUDITADMIN_OAUTH_CALLBACK_URL = "/auth/auditadmin/callback"
+ELECTIONADMIN_OAUTH_CALLBACK_URL = "/auth/electionadmin/callback"
 JURISDICTIONADMIN_OAUTH_CALLBACK_URL = "/auth/jurisdictionadmin/callback"
 
 oauth = OAuth()
@@ -43,13 +43,13 @@ auth0_sa = oauth.register(
     client_kwargs={"scope": "openid profile email"},
 )
 
-auth0_aa = oauth.register(
-    "auth0_aa",
-    client_id=AUDITADMIN_AUTH0_CLIENT_ID,
-    client_secret=AUDITADMIN_AUTH0_CLIENT_SECRET,
-    api_base_url=AUDITADMIN_AUTH0_BASE_URL,
-    access_token_url=f"{AUDITADMIN_AUTH0_BASE_URL}/oauth/token",
-    authorize_url=f"{AUDITADMIN_AUTH0_BASE_URL}/authorize",
+auth0_ea = oauth.register(
+    "auth0_ea",
+    client_id=ELECTIONADMIN_AUTH0_CLIENT_ID,
+    client_secret=ELECTIONADMIN_AUTH0_CLIENT_SECRET,
+    api_base_url=ELECTIONADMIN_AUTH0_BASE_URL,
+    access_token_url=f"{ELECTIONADMIN_AUTH0_BASE_URL}/oauth/token",
+    authorize_url=f"{ELECTIONADMIN_AUTH0_BASE_URL}/authorize",
     authorize_params={"max_age": "0"},
     client_kwargs={"scope": "openid profile email"},
 )
@@ -83,33 +83,36 @@ def serialize_election(election):
 def auth_me():
     user_type, user_key = get_loggedin_user(session)
     user = None
-    if user_type in [UserType.ADMIN, UserType.JURISDICTION_ADMIN]:
-        db_user = User.query.filter_by(email=user_key).one()
-        user = dict(
-            type=user_type,
-            email=db_user.email,
-            organizations=[
-                {
-                    "id": org.id,
-                    "name": org.name,
-                    "elections": [
-                        serialize_election(election)
-                        for election in org.elections
-                        if election.deleted_at is None
-                    ],
-                }
-                for org in db_user.organizations
-            ],
-            jurisdictions=[
-                {
-                    "id": jurisdiction.id,
-                    "name": jurisdiction.name,
-                    "election": serialize_election(jurisdiction.election)
-                }
-                for jurisdiction in db_user.jurisdictions
-                if jurisdiction.election.deleted_at is None
-            ],
-        )
+    if user_type in [UserType.ELECTION_ADMIN, UserType.JURISDICTION_ADMIN]:
+        db_user = User.query.filter_by(email=user_key).first()
+        if db_user:
+            user = dict(
+                type=user_type,
+                email=db_user.email,
+                organizations=[
+                    {
+                        "id": org.id,
+                        "name": org.name,
+                        "elections": [
+                            serialize_election(election)
+                            for election in org.elections
+                            if election.deleted_at is None
+                        ],
+                    }
+                    for org in db_user.organizations
+                ],
+                jurisdictions=[
+                    {
+                        "id": jurisdiction.id,
+                        "name": jurisdiction.name,
+                        "election": serialize_election(jurisdiction.election)
+                    }
+                    for jurisdiction in db_user.jurisdictions
+                    if jurisdiction.election.deleted_at is None
+                ],
+            )
+        else:
+            clear_loggedin_user(session)
 
     support_user_email = get_support_user(session)
     return jsonify(
@@ -156,31 +159,30 @@ def support_login_callback():
         return redirect("/")
 
 
-@auth.route("/auth/admin/start")
-def auditadmin_login():
-    redirect_uri = urljoin(request.host_url, AUDITADMIN_OAUTH_CALLBACK_URL)
+@auth.route("/auth/electionadmin/start")
+def electionadmin_login():
+    redirect_uri = urljoin(request.host_url, ELECTIONADMIN_OAUTH_CALLBACK_URL)
     session["success_redirect_url"] = (
         request.args.get("redirectOnSucess")
         if request.args.get("redirectOnSucess")
         else "/"
     )
-    return auth0_aa.authorize_redirect(redirect_uri=redirect_uri)
+    return auth0_ea.authorize_redirect(redirect_uri=redirect_uri)
 
 
-@auth.route(AUDITADMIN_OAUTH_CALLBACK_URL)
-def auditadmin_login_callback():
-    auth0_aa.authorize_access_token()
-    resp = auth0_aa.get("userinfo")
+@auth.route(ELECTIONADMIN_OAUTH_CALLBACK_URL)
+def electionadmin_login_callback():
+    auth0_ea.authorize_access_token()
+    resp = auth0_ea.get("userinfo")
     userinfo = resp.json()
     success_redirect = ""
 
     if userinfo and userinfo["email"]:
         user = User.query.filter_by(email=userinfo["email"]).first()
-        if user and len(user.administrations) > 0:
-            set_loggedin_user(session, UserType.ADMIN, userinfo["email"])
+        if user and len(user.election_administrations) > 0:
+            set_loggedin_user(session, UserType.ELECTION_ADMIN, userinfo["email"])
             success_redirect = session["success_redirect_url"]
             session.pop("success_redirect_url", None)
-
             return redirect(success_redirect)
     return jsonify(errors={ "message": "Oops, Invalid User!!" }), 400
 
@@ -209,7 +211,6 @@ def jurisdictionadmin_login_callback():
             set_loggedin_user(session, UserType.JURISDICTION_ADMIN, userinfo["email"])
             success_redirect = session["success_redirect_url"]
             session.pop("success_redirect_url", None)
-
             return redirect(success_redirect)
     return jsonify(errors={ "message": "Oops, Invalid User!!" }), 400
 

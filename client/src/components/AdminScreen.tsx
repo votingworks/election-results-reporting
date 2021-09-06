@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
+import { Redirect } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { ButtonGroup, FileInput } from '@blueprintjs/core'
+import { ButtonGroup, FileInput, Callout } from '@blueprintjs/core'
 import styled from 'styled-components'
 import { Formik, FormikProps, Field } from 'formik'
 import LinkButton from './Atoms/LinkButton'
@@ -9,13 +10,72 @@ import FormButton from './Atoms/Form/FormButton'
 import { ErrorLabel } from './Atoms/Form/_helpers'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 import FormField from './Atoms/Form/FormField'
-import { sortBy } from '../utils/array'
+import { groupBy, sortBy } from '../utils/array'
 import { api } from './utilities'
 import {
   useAuthDataContext,
-  IAdmin,
-  IElection
+  IElectionAdmin,
+  IElection,
+  IJurisdictionAdmin
 } from './UserContext'
+
+
+const ResponsiveInner = styled(Inner)`
+  @media only screen and (max-width: 768px) {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+  @media only screen and (min-width: 1440px) {
+    min-width: 100vw;
+    padding: 1% 20% 0 20%;
+  }
+`
+
+const AdminScreen: React.FC = () => {
+  const auth = useAuthDataContext()
+
+  if (auth === null) return null // Still loading
+
+  const { user } = auth
+  if (!user) return null
+
+  switch (user.type) {
+    case 'election_admin':
+      return (
+        <Wrapper>
+          <ResponsiveInner>
+            <CreateElection user={user} />
+            <ActiveElections user={user} />
+          </ResponsiveInner>
+        </Wrapper>
+      )
+    case 'jurisdiction_admin': {
+      if (user.jurisdictions.length === 1) {
+        const electionId = user.jurisdictions[0].election.id
+        const jurisdictionId = user.jurisdictions[0].id
+        return (
+          <Redirect
+            to={`election/${electionId}/jurisdiction/${jurisdictionId}/results`}
+          />
+        )
+      }
+
+      return (
+        <Wrapper>
+          <ResponsiveInner>
+              <ListElectionsJurisdictionAdmin user={user} />
+          </ResponsiveInner>
+        </Wrapper>
+      )
+    }
+    default:
+      /* istanbul ignore next */
+      return null // Shouldn't happen
+  }
+}
+
+export default AdminScreen
+
 
 const CreateElectionWrapper = styled.div`
   width: 100%;
@@ -42,7 +102,7 @@ const InlineLabel = styled.label`
   }
 `
 
-const CreateElection = ({ user }: { user: IAdmin }) => {
+const CreateElection = ({ user }: { user: IElectionAdmin }) => {
   const [submitting, setSubmitting] = useState(false)
 
   interface IObjectIterableValues extends IElection {
@@ -63,13 +123,17 @@ const CreateElection = ({ user }: { user: IAdmin }) => {
       newElection.jurisdictions as Blob,
       ( (newElection.jurisdictions && newElection.jurisdictions.name ) ? newElection.jurisdictions.name : undefined )
     )
+    formData.append(
+      'definition', 
+      newElection.definition as Blob,
+      ( (newElection.definition && newElection.definition.name ) ? newElection.definition.name : undefined )
+    )
 
-    const response: { status: string } | null = await api('/election', {
+    const response: { status: string, electionId: string } | null = await api('/election', {
       method: 'POST',
       body: formData
     })
     if (response && response.status === 'ok') {
-      // if response refresh page
       window.location.reload()
     } else {
       setSubmitting(false)
@@ -90,7 +154,7 @@ const CreateElection = ({ user }: { user: IAdmin }) => {
         pollsTimezone: '',
         certificationDate: '',
         jurisdictions: null,
-        electionDefinition: null,
+        definition: null,
       }}
     >
       {({ 
@@ -192,11 +256,37 @@ const CreateElection = ({ user }: { user: IAdmin }) => {
                 }}
                 hasSelection={!!values.jurisdictions}
                 text={values.jurisdictions ? values.jurisdictions.name : 'Select a CSV...'}
-                // disabled={isSubmitting || isProcessing || !enabled}
+                disabled={submitting}
                 fill
               />
                { errors.jurisdictions && touched.jurisdictions && (
                   <ErrorLabel>{errors.jurisdictions}</ErrorLabel>
+                )}
+            </label>
+          </FormSection>
+          <FormSection>
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            <label htmlFor="definition">
+              <p>Election Definition</p>
+              <FileInput
+                inputProps={{
+                  accept: '.json',
+                  name: 'definition',
+                }}
+                onInputChange={e => {
+                  setFieldValue(
+                    'definition',
+                    (e.currentTarget.files && e.currentTarget.files[0]) ||
+                      undefined
+                  )
+                }}
+                hasSelection={!!values.definition}
+                text={values.definition ? values.definition.name : 'Select a JSON...'}
+                disabled={submitting}
+                fill
+              />
+               { errors.definition && touched.definition && (
+                  <ErrorLabel>{errors.definition}</ErrorLabel>
                 )}
             </label>
           </FormSection>
@@ -222,7 +312,7 @@ const ActiveElectionsWrapper = styled.div`
   padding: 30px;
 `
 
-const ActiveElections = ({ user }: { user: IAdmin }) => {
+const ActiveElections = ({ user }: { user: IElectionAdmin }) => {
   return (
     <ActiveElectionsWrapper>
       <h2>Active Elections</h2>
@@ -242,7 +332,7 @@ const ActiveElections = ({ user }: { user: IAdmin }) => {
               >
                 <LinkButton
                   style={{ justifyContent: 'start' }}
-                  to='#'
+                  to={`/election/${election.id}/data`}
                   intent='primary'
                   fill
                 >
@@ -257,36 +347,51 @@ const ActiveElections = ({ user }: { user: IAdmin }) => {
   )
 }
 
-const ResponsiveInner = styled(Inner)`
-  @media only screen and (max-width: 768px) {
-    flex-direction: column-reverse;
-    align-items: center;
-  }
-  @media only screen and (min-width: 1440px) {
-    min-width: 100vw;
-    padding: 1% 20% 0 20%;
+const JurisdictionElectionListWrapper = styled.div`
+  width: 50%;
+  padding: 30px;
+  @media only screen and (max-width: 767px) {
+    width: 100%;
   }
 `
 
-const ElectionScreen: React.FC = () => {
-  const auth = useAuthDataContext()
-
-  if (auth === null || auth.user === null) return null // Still loading
-
-  if (auth.user && auth.user.type !== 'admin') {
-    return null
-  }
-
-  const { user } = auth
+const ListElectionsJurisdictionAdmin = ({ user }: { user: IJurisdictionAdmin }) => {
+  const jurisdictionsByElection = groupBy(user.jurisdictions, j => j.election.id)
 
   return (
-    <Wrapper>
-      <ResponsiveInner>
-        <CreateElection user={ user } />
-        <ActiveElections user={ user } />
-      </ResponsiveInner>
-    </Wrapper>
+    <JurisdictionElectionListWrapper>
+      <h2>Election wise Jurisdictions</h2>
+      {Object.entries(jurisdictionsByElection).length === 0 ? (
+        <Callout intent="warning">
+          You don&apos;t have any available elections at the moment
+        </Callout>
+      ) : (
+        sortBy(
+          Object.entries(jurisdictionsByElection),
+          ([_, jurisdictions]) => jurisdictions[0].election.electionName
+        ).map(([electionId, jurisdictions], i: number) => (
+          <div key={electionId}>
+            <h2>{`${jurisdictions[0].election.electionName}-`}</h2>
+            {sortBy(jurisdictions, j => j.name).map(
+              ({ id, name, election }) => (
+                <LinkButton
+                  key={id}
+                  to={`/election/${election.id}/jurisdiction/${id}/results`}
+                  intent="primary"
+                  large
+                  fill
+                  style={{
+                    justifyContent: 'start',
+                    marginBottom: '15px',
+                  }}
+                >
+                  {name}
+                </LinkButton>
+              )
+            )}
+          </div>
+        ))
+      )}
+    </JurisdictionElectionListWrapper>
   )
 }
-
-export default ElectionScreen

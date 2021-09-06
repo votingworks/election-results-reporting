@@ -105,7 +105,7 @@ class Organization(BaseModel):
     )
 
 
-# Election is a slight misnomer - this model represents an audit.
+# Election is a slight misnomer - this model represents an Election.
 class Election(BaseModel):
     id = Column(String(200), primary_key=True)
 
@@ -118,7 +118,9 @@ class Election(BaseModel):
 
     # Who does this election belong to?
     organization_id = Column(
-        String(200), ForeignKey("organization.id", ondelete="cascade"), nullable=False
+        String(200),
+        ForeignKey("organization.id", ondelete="cascade"),
+        nullable=False
     )
     organization = relationship("Organization", back_populates="elections")
 
@@ -143,9 +145,42 @@ class Election(BaseModel):
         cascade="all, delete-orphan",
     )
 
-    # When a user deletes an audit, we keep it in the database just in case
+    # The definition file contains election related data
+    definition_file_id = Column(
+        String(200), ForeignKey("file.id", ondelete="set null")
+    )
+    definition_file = relationship(
+        "File",
+        foreign_keys=[definition_file_id],
+        single_parent=True,
+        cascade="all, delete-orphan",
+    )
+
+    # Contests in the election
+    contests = relationship(
+        "Contest",
+        back_populates="election",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Contest.name",
+    )
+
+    # Parties in the election
+    parties = relationship(
+        "Party",
+        back_populates="election",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Party.name",
+    )
+
+    # When a user deletes an election, we keep it in the database just in case
     # they change their mind, but flag it so that we can restrict access
     deleted_at = Column(UTCDateTime)
+
+    @validates('polls_timezone')
+    def convert_upper(self, _key, polls_timezone):
+        return polls_timezone.upper()
 
     __table_args__ = (UniqueConstraint("organization_id", "election_name"),)
 
@@ -154,7 +189,9 @@ class Election(BaseModel):
 class Jurisdiction(BaseModel):
     id = Column(String(200), primary_key=True)
     election_id = Column(
-        String(200), ForeignKey("election.id", ondelete="cascade"), nullable=False
+        String(200),
+        ForeignKey("election.id", ondelete="cascade"),
+        nullable=False
     )
     election = relationship("Election", back_populates="jurisdictions")
 
@@ -163,16 +200,112 @@ class Jurisdiction(BaseModel):
     __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
+class District (BaseModel):
+    id = Column(String(200), primary_key=True)
+    name = Column(String(200), nullable=False)
+
+    # Contests in the district
+    contests = relationship(
+        "Contest",
+        back_populates="district",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Contest.name",
+    )
+
+
+class Precinct (BaseModel):
+    id = Column(String(200), primary_key=True)
+    nmae = Column(String(200), nullable=False)
+
+
+class Party (BaseModel):
+    id = Column(String(200), primary_key=True)
+    name = Column(String(200), nullable=False)
+
+    electionId = Column(
+        String(200),
+        ForeignKey("election.id", ondelete="cascade"),
+        nullable=False
+    )
+    election = relationship("Election", back_populates="parties")
+
+    # The members of the party
+    members = relationship(
+        "Candidate",
+        back_populates="party",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Candidate.name",
+    )
+
+
+class Contest (BaseModel):
+    id = Column(String(200), primary_key=True)
+    name = Column(String(200), nullable=False)
+    type = Column(String(200), nullable=False)
+    seats = Column(String(200), nullable=False)
+    allowedWriteIns = Column(Boolean, nullable=False)
+    total_ballots_cast = Column(Integer)
+
+    districtId = Column(
+        String(200),
+        ForeignKey("district.id", ondelete="cascade"),
+        nullable=False
+    )
+    district = relationship("District",back_populates="contests")
+
+    electionId = Column(
+        String(200), 
+        ForeignKey("election.id", ondelete="cascade"), 
+        nullable=False
+    )
+    election = relationship("Election", back_populates="contests")
+
+    # The candidates participating in the contest
+    candidates = relationship(
+        "Candidate",
+        back_populates="contest",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Candidate.name",
+    )
+
+
+class Candidate (BaseModel):
+    id = Column(String(200), primary_key=True)
+    name = Column(String(200), nullable=False)
+    num_votes = Column(Integer, nullable=True)
+
+    party_id = Column(
+        String(200),
+        ForeignKey("party.id", ondelete="cascade"),
+        nullable=False
+    )
+    party = relationship("Party", back_populates="members")
+
+    contest_id = Column(
+        String(200),
+        ForeignKey("contest.id", ondelete="cascade"),
+        nullable=False
+    )
+    contest = relationship("Contest", back_populates="candidates")
+
+
 class User(BaseModel):
     id = Column(String(200), primary_key=True)
     email = Column(String(200), unique=True, nullable=False)
     external_id = Column(String(200), unique=True)
 
     organizations = relationship(
-        "Organization", secondary="administration", uselist=True
+        "Organization",
+        secondary="election_administration",
+        uselist=True
     )
     jurisdictions = relationship(
-        "Jurisdiction", secondary="jurisdiction_administration", uselist=True
+        "Jurisdiction",
+        secondary="jurisdiction_administration",
+        uselist=True
     )
 
     @validates("email")
@@ -180,20 +313,25 @@ class User(BaseModel):
         return email.lower()
 
 
-class AuditAdministration(BaseModel):
+class ElectionAdministration(BaseModel):
     organization_id = Column(
-        String(200), ForeignKey("organization.id", ondelete="cascade"), nullable=False,
+        String(200),
+        ForeignKey("organization.id", ondelete="cascade"),
+        nullable=False
     )
     user_id = Column(
-        String(200), ForeignKey("user.id", ondelete="cascade"), nullable=False
+        String(200),
+        ForeignKey("user.id", ondelete="cascade"),
+        nullable=False
     )
 
     organization = relationship(
-        Organization,
-        backref=backref("administrations", cascade="all, delete-orphan"),
+        "Organization",
+        backref=backref("election_administrations", cascade="all, delete-orphan")
     )
     user = relationship(
-        User, backref=backref("administrations", cascade="all, delete-orphan")
+        "User",
+        backref=backref("election_administrations", cascade="all, delete-orphan")
     )
 
     __table_args__ = (PrimaryKeyConstraint("organization_id", "user_id"),)
@@ -201,18 +339,22 @@ class AuditAdministration(BaseModel):
 
 class JurisdictionAdministration(BaseModel):
     user_id = Column(
-        String(200), ForeignKey("user.id", ondelete="cascade"), nullable=False
+        String(200),
+        ForeignKey("user.id", ondelete="cascade"),
+        nullable=False
     )
     jurisdiction_id = Column(
-        String(200), ForeignKey("jurisdiction.id", ondelete="cascade"), nullable=False,
+        String(200),
+        ForeignKey("jurisdiction.id", ondelete="cascade"),
+        nullable=False,
     )
 
     jurisdiction = relationship(
-        Jurisdiction,
+        "Jurisdiction",
         backref=backref("jurisdiction_administrations", cascade="all, delete-orphan"),
     )
     user = relationship(
-        User,
+        "User",
         backref=backref("jurisdiction_administrations", cascade="all, delete-orphan"),
     )
 
@@ -223,7 +365,11 @@ class File(BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(250), nullable=False)
     contents = deferred(Column(Text, nullable=False))
-    uploaded_at = Column(UTCDateTime, default=lambda: dt.now(timezone.utc), nullable=False)
+    uploaded_at = Column(
+        UTCDateTime, 
+        default=lambda: dt.now(timezone.utc),
+        nullable=False
+    )
 
     # Metadata for processing files in the background.
     processing_started_at = Column(UTCDateTime)
@@ -245,7 +391,9 @@ class ActivityLogRecord(Base):
     id = Column(String(200), primary_key=True)
     timestamp = Column(UTCDateTime, nullable=False)
     organization_id = Column(
-        String(200), ForeignKey("organization.id", ondelete="cascade"), nullable=False
+        String(200),
+        ForeignKey("organization.id", ondelete="cascade"),
+        nullable=False
     )
     activity_name = Column(String(200), nullable=False)
     info = Column(JSON, nullable=False)

@@ -19,7 +19,7 @@ import AuthDataProvider, {
 } from './components/UserContext'
 
 import HomeScreen from './components/HomeScreen'
-import ElectionScreen from './components/ElectionScreen'
+import AdminScreen from './components/AdminScreen'
 import ElectionResults from './components/ElectionResults'
 import ElectionData from './components/ElectionData'
 
@@ -52,15 +52,21 @@ const LoginScreen: React.FC<ILoginScreenProps> = ({ successRedirect }: ILoginScr
         </Callout>
       )}
       <Card style={{ margin: '25px 0 15px 0' }}>
-        <p>Log in to Election Results Reporting:</p>
+        <p>Participating in an election in your local jurisdiction?</p>
         <AnchorButton
-          href={'/auth/admin/start'+(successRedirect ? `?redirectOnSucess=${successRedirect}` : '')}
+          href={'/auth/jurisdictionadmin/start'+(successRedirect ? `?redirectOnSucess=${successRedirect}` : '')}
           intent="primary"
           large
         >
-          Log in as Admin
+          Log in to your election
         </AnchorButton>
       </Card>
+      <div>
+        <p>
+          Election administrators:{' '}
+          <a href={"/auth/electionadmin/start"+(successRedirect ? `?redirectOnSucess=${successRedirect}` : '')}>Log in as an admin</a>
+        </p>
+      </div>
     </LoginWrapper>
   )
 }
@@ -70,7 +76,6 @@ const PrivateRoute: React.FC<RouteProps> = ({
   ...props
 }: RouteProps) => {
   const auth = useAuthDataContext()
-  if (auth && auth.user) console.log(auth.user)
   if (auth === null) {
     // Still loading /api/me, don't show anything
     return null
@@ -100,15 +105,15 @@ const App: React.FC = () => {
           <Switch>
             <Route exact path="/" component={HomeScreen} />
             <PrivateRoute
-              exact path="/election/home"
-              component={ElectionScreen}
+              exact path="/admin"
+              component={AdminScreen}
             />
             <PrivateRoute
-              exact path="/election/results"
+              exact path="/election/:electionId/jurisdiction/:jurisdictionId/results"
               component={ElectionResults}
             />
             <PrivateRoute
-              exact path="/election/data"
+              exact path="/election/:electionId/data"
               component={ElectionData}
             />
             <Route>

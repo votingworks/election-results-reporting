@@ -11,9 +11,9 @@ from .. import config
 
 
 class UserType(str, enum.Enum):
-    # Audit admins are represented with a User record associated with one or
+    # Admins are represented with a User record associated with one or
     # more Organizations and use User.email as their login key.
-    ADMIN = "admin"
+    ELECTION_ADMIN = "election_admin"
     # Jurisdiction admins are represented with a User record associated with
     # one or more Jurisdictions and use User.email as their login key.
     JURISDICTION_ADMIN = "jurisdiction_admin"
@@ -110,9 +110,9 @@ def check_access(
         raise Forbidden(f"Access forbidden for user type {user_type}")
 
     # Check that the user has access to the resource they are requesting
-    if user_type == UserType.ADMIN and election:
+    if user_type == UserType.ELECTION_ADMIN and election:
         user = User.query.filter_by(email=user_key).one()
-        if not any(
+        if election and not any(
             org for org in user.organizations if org.id == election.organization_id
         ):
             raise Forbidden(
@@ -120,9 +120,8 @@ def check_access(
             )
 
     if user_type == UserType.JURISDICTION_ADMIN:
-        assert jurisdiction
         user = User.query.filter_by(email=user_key).one()
-        if not any(j for j in user.jurisdictions if j.id == jurisdiction.id):
+        if jurisdiction and not any(j for j in user.jurisdictions if j.id == jurisdiction.id):
             raise Forbidden(
                 description=f"{user.email} does not have access to jurisdiction {jurisdiction.id}"
             )

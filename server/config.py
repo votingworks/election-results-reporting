@@ -116,19 +116,19 @@ def read_support_auth0_creds() -> Tuple[str, str, str, str]:
 ) = read_support_auth0_creds()
 
 
-def read_auditadmin_auth0_creds() -> Tuple[str, str, str]:
+def read_electionadmin_auth0_creds() -> Tuple[str, str, str]:
     return (
-        os.environ.get("ELREP_AUDITADMIN_AUTH0_BASE_URL", ""),
-        os.environ.get("ELREP_AUDITADMIN_AUTH0_CLIENT_ID", ""),
-        os.environ.get("ELREP_AUDITADMIN_AUTH0_CLIENT_SECRET", ""),
+        os.environ.get("ELREP_ELECTIONADMIN_AUTH0_BASE_URL", ""),
+        os.environ.get("ELREP_ELECTIONADMIN_AUTH0_CLIENT_ID", ""),
+        os.environ.get("ELREP_ELECTIONADMIN_AUTH0_CLIENT_SECRET", ""),
     )
 
 
 (
-    AUDITADMIN_AUTH0_BASE_URL,
-    AUDITADMIN_AUTH0_CLIENT_ID,
-    AUDITADMIN_AUTH0_CLIENT_SECRET,
-) = read_auditadmin_auth0_creds()
+    ELECTIONADMIN_AUTH0_BASE_URL,
+    ELECTIONADMIN_AUTH0_CLIENT_ID,
+    ELECTIONADMIN_AUTH0_CLIENT_SECRET,
+) = read_electionadmin_auth0_creds()
 
 
 def read_jurisdictionadmin_auth0_creds() -> Tuple[str, str, str]:

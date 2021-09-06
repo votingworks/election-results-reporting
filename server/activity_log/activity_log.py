@@ -44,7 +44,7 @@ class JurisdictionActivity(Activity):
 
 
 @dataclass
-class UploadFile(JurisdictionActivity):
+class UploadAndProcessFile(Activity):
     file_type: str
     error: Optional[str]
 

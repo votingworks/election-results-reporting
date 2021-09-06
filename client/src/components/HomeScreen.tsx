@@ -377,7 +377,7 @@ const datesAreOnSameDay = (first: Date, second: Date): boolean =>
 
 // pre-election || during-election || post-election
 const refreshInterval = 60
-const ElectionNightReporting: React.FC = () => {
+const ElectionResultsReporting: React.FC = () => {
   const getElectionStatus = () => {
     const now = new Date()
     if (now <= new Date(election.polls.openAt)) {
@@ -646,7 +646,7 @@ const ElectionNightReporting: React.FC = () => {
 }
 
 const HomeScreen: React.FC = () => {
-  return <ElectionNightReporting />
+  return <ElectionResultsReporting />
 }
 
 export default HomeScreen

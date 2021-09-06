@@ -1,4 +1,5 @@
 import React from 'react'
+import { useParams, Redirect } from  'react-router-dom'
 import { Cell } from 'react-table'
 import styled from 'styled-components'
 import { Button, ButtonGroup, Icon, Intent } from '@blueprintjs/core'
@@ -6,6 +7,7 @@ import LinkButton from './Atoms/LinkButton'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 import { Table } from './Atoms/Table'
 import { useConfirm, Confirm } from './Atoms/Confirm'
+import { IElectionAdmin, useAuthDataContext } from './UserContext'
 
 const DataTableWrapper = styled.div`
   width: 100%;
@@ -37,10 +39,13 @@ const ActionButton = styled(LinkButton)`
   width: 20px;
 `
 
-const DataTable = () => {
-  const { confirm, confirmProps } = useConfirm()
+const DataTable = ({ user }: { user: IElectionAdmin }) => {
+  interface IParams {
+    electionId: string;
+    jurisdictionId: string;
+  }
 
-  interface IElection {
+  interface IElectionData {
     id: number,
     jurisdictionName: string,
     fileName: string,
@@ -49,7 +54,10 @@ const DataTable = () => {
     status: string
   }
 
-  const tempData: IElection[] = [
+  const { electionId } = useParams<IParams>()
+  const { confirm, confirmProps } = useConfirm()
+
+  const tempData: IElectionData[] = [
     {
       id: 0,
       jurisdictionName: 'Adams County',
@@ -117,7 +125,7 @@ const DataTable = () => {
 
   return (
     <DataTableWrapper>
-      <h2>Sample Election</h2>
+      <h2>{user.organizations.map(organization => organization.elections.filter(election => election.id === electionId)[0])[0].electionName}</h2>
       <TableWrapper>
         <Table 
           data={tempData}
@@ -174,10 +182,19 @@ const DataTable = () => {
 }
 
 const ElectionData:React.FC = () => {
+  const auth = useAuthDataContext()
+  if (auth && (!auth.user || auth.user.type !== 'election_admin')) {
+    return (
+    <Redirect to="/admin" />
+    )
+  }
+  if (!auth || !auth.user || auth.user.type!=='election_admin') return null
+  const { user } = auth
+
   return (
     <Wrapper>
       <Inner>
-        <DataTable />
+        <DataTable user={user} />
       </Inner>
     </Wrapper>
   )

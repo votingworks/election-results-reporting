@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useRouteMatch, RouteComponentProps } from 'react-router-dom'
 import styled from 'styled-components'
 import {
   Navbar,
@@ -12,9 +12,9 @@ import {
   MenuItem,
   Popover,
   Position,
-  Colors
+  Colors,
+  Icon
 } from '@blueprintjs/core'
-import LinkButton from './Atoms/LinkButton'
 import { useAuthDataContext } from './UserContext'
 import { Inner } from './Atoms/Wrapper'
 
@@ -40,6 +40,27 @@ const UserMenu = styled.div`
   }
   .bp3-menu {
     width: 200px;
+  }
+`
+
+const SupportBar = styled(Navbar)`
+  background-color: ${Colors.ROSE3};
+  height: 35px;
+  padding: 0;
+  color: ${Colors.WHITE};
+  font-weight: 500;
+  .bp3-navbar-group {
+    height: 35px;
+  }
+  a {
+    text-decoration: none;
+    color: ${Colors.WHITE};
+    .bp3-icon {
+      margin-right: 8px;
+    }
+  }
+  .bp3-navbar-divider {
+    border-color: rgba(255, 255, 255, 0.7);
   }
 `
 
@@ -70,67 +91,97 @@ const CustomMenuItem = styled(MenuItem)`
   }
 `
 
-const Header: React.FC<{}> = () => {
-  const location = useLocation()
-  const auth = useAuthDataContext()
+interface TParams {
+  electionId: string
+  jurisdictionId?: string
+}
 
-  if (auth && auth.user && auth.user.type === 'admin') return null
+const Header: React.FC<{}> = () => {
+  const jurisdictionMatch:
+    | RouteComponentProps<TParams>['match']
+    | null = useRouteMatch(
+    '/election/:electionId/jurisdiction/:jurisdictionId?'
+  )
+  const supportMatch = useRouteMatch('/support')
+  const auth = useAuthDataContext()
+  const jurisdiction =
+    jurisdictionMatch &&
+    auth &&
+    auth.user &&
+    auth.user.type === 'jurisdiction_admin' &&
+    auth.user.jurisdictions.find(
+      j => j.id === jurisdictionMatch.params.jurisdictionId
+    )
 
   return (
-    <Nav>
-      <InnerBar>
-        <NavbarGroup align={Alignment.LEFT}>
-          <NavbarHeading>
-            <Link to="/">
-              <img
-                src="/elrep.png"
-                alt="Election Results Reporting, by VotingWorks"
-                className="logo-desktop"
-              />
-              <img
-                src="/elrep-mobile.png"
-                alt="Election Results Reporting, by VotingWorks"
-                className="logo-mobile"
-              />
-            </Link>
-          </NavbarHeading>
-          <NavbarDivider />
-          <LinkButton to="/" icon="home" className={ `bp3-minimal ${location.pathname === '/' ? 'bp3-active' : ''}` }> Home</LinkButton>&nbsp;
-          <Popover content={
-            <Menu>
-              <CustomMenuItem icon="edit" href="/election/home" text="Create/View Election" active={ location.pathname === '/election/home' } />
-              <CustomMenuItem icon="cloud-upload" href="/election/results" text="Load Results Data" active={ location.pathname === '/election/results' } />
-              <CustomMenuItem icon="panel-table" href="/election/results" text="Election Data" active={ location.pathname === '/election/data' } />
-            </Menu>
-          } position={ Position.BOTTOM_LEFT } minimal>
-            <Button className="bp3-minimal" icon="application" rightIcon="caret-down" text="Election" active={ location.pathname.indexOf('/election/') > -1 } />
-          </Popover>
-        </NavbarGroup>&nbsp;
-        <NavbarGroup align={Alignment.RIGHT}>
-          {auth && auth.user && (
-          <>
-            <UserMenu>
-              <Popover
-                content={
-                  <Menu>
-                    <CustomMenuItem text="Log out" href="/auth/logout" icon="log-out" />
-                  </Menu>
-                }
-                usePortal={false}
-                position={ Position.BOTTOM }
-                minimal
-                fill
-              >
-                <Button icon="user" minimal>
-                  {auth.user.email}
-                </Button>
-              </Popover>
-            </UserMenu>
-          </>
-          )}
-        </NavbarGroup>
-      </InnerBar>
-    </Nav>
+    <>
+      {auth && auth.supportUser && (
+        <SupportBar>
+          <InnerBar>
+            <NavbarGroup align={Alignment.LEFT}>
+              <a href="/support">
+                <Icon icon="eye-open" />
+                <span>Arlo Support Tools</span>
+              </a>
+            </NavbarGroup>
+            <NavbarGroup align={Alignment.RIGHT}>
+              <span>{auth.supportUser.email}</span>
+              <NavbarDivider />
+              <a href="/auth/support/logout">Log out</a>
+            </NavbarGroup>
+          </InnerBar>
+        </SupportBar>
+      )}
+      {!supportMatch && (
+        <Nav>
+          <InnerBar>
+            <NavbarGroup align={Alignment.LEFT}>
+              <NavbarHeading>
+                <Link to="/">
+                  <img
+                    src="/elrep.png"
+                    alt="Election Results Reporting, by VotingWorks"
+                    className="logo-desktop"
+                  />
+                  <img
+                    src="/elrep-mobile.png"
+                    alt="Election Results Reporting, by VotingWorks"
+                    className="logo-mobile"
+                  />
+                </Link>
+              </NavbarHeading>
+              {jurisdiction && (
+                <NavbarHeading>Jurisdiction: {jurisdiction.name}</NavbarHeading>
+              )}
+              <NavbarDivider />
+            </NavbarGroup>&nbsp;
+            <NavbarGroup align={Alignment.RIGHT}>
+              { auth && auth.user && (
+              <>
+                <UserMenu>
+                  <Popover
+                    content={
+                      <Menu>
+                        <CustomMenuItem text="Log out" href="/auth/logout" icon="log-out" />
+                      </Menu>
+                    }
+                    usePortal={false}
+                    position={ Position.BOTTOM }
+                    minimal
+                    fill
+                  >
+                    <Button icon="user" minimal>
+                      {auth.user.email}
+                    </Button>
+                  </Popover>
+                </UserMenu>
+              </>
+              )}
+            </NavbarGroup>
+          </InnerBar>
+        </Nav>
+      )}
+      </>
   )
 }
 

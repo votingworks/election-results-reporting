@@ -17,7 +17,7 @@ export interface IElection {
   pollsTimezone: string,
   certificationDate: Date | string,
   jurisdictions: File | null,
-  electionDefinition: File | null
+  definition: File | null
 }
 
 export interface IOrganization {
@@ -32,8 +32,8 @@ export interface IJurisdiction {
   election: IElection
 }
 
-export interface IAdmin {
-  type: 'admin'
+export interface IElectionAdmin {
+  type: 'election_admin'
   name: string
   email: string
   organizations: IOrganization[]
@@ -48,7 +48,7 @@ export interface IJurisdictionAdmin {
   jurisdictions: IJurisdiction[]
 }
 
-export type IUser = IAdmin | IJurisdictionAdmin
+export type IUser = IElectionAdmin | IJurisdictionAdmin
 
 export interface ISupportUser {
   email: string

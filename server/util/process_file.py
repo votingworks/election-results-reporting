@@ -28,7 +28,6 @@ def process_file(session: Session, file: File, callback: Callable[[], None]) -> 
     )
     if result.rowcount == 0:
         return False
-
     # If we got this far, `file` is ours to process.
     try:
         session.begin_nested()
