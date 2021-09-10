@@ -110,7 +110,7 @@ def check_access(
         raise Forbidden(f"Access forbidden for user type {user_type}")
 
     # Check that the user has access to the resource they are requesting
-    if user_type == UserType.ELECTION_ADMIN and election:
+    if user_type == UserType.ELECTION_ADMIN:
         user = User.query.filter_by(email=user_key).one()
         if election and not any(
             org for org in user.organizations if org.id == election.organization_id

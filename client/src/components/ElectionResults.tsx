@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react'
+
+import React, { useEffect, useState, ReactElement } from 'react'
 import { useParams, Redirect } from 'react-router-dom'
 
-import { HTMLSelect } from '@blueprintjs/core'
+
+import { toast } from 'react-toastify'
+import { HTMLSelect, Callout, H3, H6 } from '@blueprintjs/core'
 import styled from 'styled-components'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 
@@ -12,14 +15,55 @@ import FormField from './Atoms/Form/FormField'
 import { ErrorLabel } from './Atoms/Form/_helpers'
 import CSVFile, { IFileInfo } from './CSVForm/index'
 
-import { IJurisdiction, useAuthDataContext } from './UserContext'
+import { useAuthDataContext } from './UserContext'
+import { IPrecinct, IDistrict, ICandidate, IContest, IBallotType } from './ElectionContext'
 
 import { api, testNumber } from './utilities'
 
 
-const resultsDataFile: IFileInfo = {
-  file: null,
-  processing: null,
+const SpacedH3 = styled(H3)`
+  &.bp3-heading {
+    margin-bottom: 20px;
+  }
+`
+const StatusWrapper = styled(Callout)`
+  display: flex;
+  padding: 30px 0;
+  .text {
+    flex-grow: 1;
+    p {
+      margin-bottom: 0;
+    }
+  }
+`
+
+interface IStatusBoxProps {
+  headline?: string
+  details?: string[]
+  electionName: string
+  children?: ReactElement
+}
+
+const StatusBox: React.FC<IStatusBoxProps> = ({
+  headline,
+  details,
+  electionName,
+  children,
+}: IStatusBoxProps) => {
+  return (
+    <StatusWrapper icon={null}>
+      <Inner>
+        <div className="text">
+          <SpacedH3>{electionName}</SpacedH3>
+          <H6>{headline}</H6>
+          {details && details.map(detail => (
+            <p key={detail}>{detail}</p>
+          ))}
+          {children}
+        </div>
+      </Inner>
+    </StatusWrapper>
+  )
 }
 
 
@@ -28,6 +72,10 @@ const UploadResultsDataWrapper = styled.div`
   padding: 30px;
 `
 
+const resultsDataFile: IFileInfo = {
+  file: null,
+  processing: null,
+}
 
 const ResultsDataUpload = () => {
   return (
@@ -47,81 +95,43 @@ const ResultsDataUpload = () => {
   );
 }
 
+
 const ResultsDataFormWrapper = styled.div`
   width: 100%;
   background-color: #ebf1f5;
   padding: 30px;
 `
-
 const WideField = styled(FormField)`
   width: 100%;
 `
-
 const SpacedDiv = styled.div`
   margin: 20px auto;
 `
-
 const Select = styled(HTMLSelect)`
   // margin-left: 5px;
   width: 100%;
 `
-
 const AddButton = styled(FormButton)`
   font-size: 24px;
   font-weight: bold;
   padding: 0 0 4px 0;
 `
 
-
 interface IParams {
   electionId: string;
   jurisdictionId: string;
 }
-
-interface ICandidate {
-  id: string;
-  name: string;
-  numVotes: string;
-}
-
-interface IContest {
-  id: string;
-  title: string;
-  districtId: string;
-  allowWriteIns?: Boolean;
-  totalBallotsCast?: string;
-  candidates: ICandidate[]
-}
-
-interface IPrecinct {
-  id: string;
-  name: string;
-}
-
-interface IDistrict {
-  id: string;
-  name: string;
-}
-
-interface IBallotType {
-  id: string;
-  name?: string;
-  precincts: IPrecinct['id'][];
-  districts: IDistrict['id'][];
-}
-
 interface IDefinition {
   readonly contests: IContest[];
   readonly districts: IDistrict[];
   readonly precincts: IPrecinct[];
   readonly ballotTypes?: IBallotType[];
 }
-
 interface IElectionResult {
-  jurisdictionId: IJurisdiction['id']
   precinct: IPrecinct['id'];
   ballotType?: IBallotType['id'];
-  totalBallotsCast: IContest['totalBallotsCast'];
+  totalBallotsCast: string;
+  source: string;
   contests: {
     id: IContest['id'];
     candidates: ICandidate[];
@@ -134,7 +144,7 @@ const ResultsDataForm = () => {
 
   const [submitting, setSubmitting] = useState(false)
 
-  // Init Definition
+  // Init from Definition
   useEffect( () => {
     (async () => {
       const response = await api<IDefinition>(`/election/${electionId}/definition/file`, { method: 'GET' })
@@ -167,17 +177,29 @@ const ResultsDataForm = () => {
 
   const onSubmit = async (electionResultsData: IElectionResult) => {
     setSubmitting(true)
-    console.log(electionResultsData)
-    setSubmitting(false)
+    electionResultsData.source="Data Entry"
+    const response: { status: string, errors: {errorType: string; message: string;}[] } | null = await api(`/election/${electionId}/jurisdiction/${jurisdictionId}/results`, {
+      method: 'POST',
+      body: JSON.stringify(electionResultsData),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    if (response && response.status === 'ok') {
+      window.location.reload()
+    } else {
+      setSubmitting(false)
+      toast.error("Err, Couldn't create election! Try Again")
+    }
   }
 
   return (
     <Formik
       onSubmit={onSubmit}
       initialValues={{
-        jurisdictionId: `${jurisdictionId}`,
         precinct: '',
-        totalBallotsCast: '0',
+        totalBallotsCast: '',
+        source: 'Data Entry',
         contests: dummyContests,
       }}
     >
@@ -266,7 +288,7 @@ const ResultsDataForm = () => {
                               }}
                               value={values.contests[i].id}
                               options={[...((values.precinct && electionDefinition && electionDefinition.contests) ?
-                                [{ value: '', label: 'Choose' }, ...electionDefinition.contests.map(contest=>({value: contest.id, label: contest.title}))] :
+                                [{ value: '', label: 'Choose' }, ...electionDefinition.contests.map(contest=>({value: contest.id, label: contest.name}))] :
                                 [{ value: '', label: 'Choose' }])
                               ]}
                             />
@@ -325,10 +347,33 @@ const ResponsiveInner = styled(Inner)`
 `
 
 const ElectionResults: React.FC = () => {
+  const { electionId, jurisdictionId } = useParams<IParams>()
+  const [ electionResultStatus, setElectionResultStatus ] = useState<{status: string} | null>(null)
+  
+  useEffect( () => {
+    (async () => {
+      const response = await api<{status: string}>(`/election/${electionId}/jurisdiction/${jurisdictionId}/results`, { method: 'GET' })
+      setElectionResultStatus(response)
+    })()
+  }, [electionId, jurisdictionId])
+
   const auth = useAuthDataContext()
   if (auth && (!auth.user || auth.user.type !== 'jurisdiction_admin')) {
     return (
     <Redirect to="/admin" />
+    )
+  }
+
+  if (!electionResultStatus) return null
+
+  if (electionResultStatus.status === 'uploaded') {
+    return (
+      auth && auth.user && (
+      <StatusBox
+        headline="Election results already uploaded!"
+        details={["Contact Election Administrator to upload again"]}
+        electionName={auth.user.jurisdictions.filter(jurisdiction=>jurisdiction.election.id===electionId)[0].election.electionName }
+      />)
     )
   }
   

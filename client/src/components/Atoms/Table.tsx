@@ -22,6 +22,10 @@ const StyledTable = styled.table`
   }
 `
 
+const CenteredTD = styled.td`
+  text-align: center;
+`
+
 interface IFilterInputProps<T extends object> {
   placeholder: string
   value: string
@@ -114,7 +118,7 @@ export const Table = <T extends object>({
         </tr>
       </thead>
       <tbody {...getTableBodyProps()}>
-        {rows.map(row => {
+        {rows && rows.map(row => {
           prepareRow(row)
           return (
             <tr {...row.getRowProps()}>
@@ -124,6 +128,12 @@ export const Table = <T extends object>({
             </tr>
           )
         })}
+        {rows.length===0 && (
+            <tr>
+                <CenteredTD colSpan={headers.length}>{'No Data Found'}</CenteredTD>
+            </tr>
+          )
+        }
       </tbody>
       {columns.some(column => column.Footer) && (
         <tfoot>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useRouteMatch, RouteComponentProps } from 'react-router-dom'
+import { Link, useLocation, useRouteMatch, RouteComponentProps } from 'react-router-dom'
 import styled from 'styled-components'
 import {
   Navbar,
@@ -97,6 +97,7 @@ interface TParams {
 }
 
 const Header: React.FC<{}> = () => {
+  const location = useLocation()
   const jurisdictionMatch:
     | RouteComponentProps<TParams>['match']
     | null = useRouteMatch(
@@ -137,7 +138,7 @@ const Header: React.FC<{}> = () => {
           <InnerBar>
             <NavbarGroup align={Alignment.LEFT}>
               <NavbarHeading>
-                <Link to="/">
+                <Link to={location.pathname !== "/" ? "/admin" : "/"}>
                   <img
                     src="/elrep.png"
                     alt="Election Results Reporting, by VotingWorks"

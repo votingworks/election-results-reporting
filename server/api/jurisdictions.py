@@ -1,13 +1,16 @@
+
 import uuid
 import logging
 from typing import Tuple, List
 from flask import jsonify, request
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, Conflict
 
 from . import api
 from ..models import *  # pylint: disable=wildcard-import
 from ..database import db_session
 from ..auth import restrict_access, UserType
+
+from ..util.jsonschema import JSONDict, validate
 from ..util.process_file import serialize_file, serialize_file_processing, process_file
 from ..util.csv_parse import decode_csv_file, parse_csv, CSVValueType, CSVColumnType
 
@@ -21,7 +24,6 @@ JURISDICTIONS_COLUMNS = [
     CSVColumnType("Jurisdiction", CSVValueType.TEXT, unique=True),
     CSVColumnType("Admin Email", CSVValueType.EMAIL, unique=True),
 ]
-
 
 def process_jurisdictions_file(session, election: Election, file: File) -> None:
     def process():
@@ -100,6 +102,29 @@ def bulk_update_jurisdictions(
         return new_admins
 
 
+ELECTION_RESULT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "totalBallotsCast": {"type": "string"},
+        "electionId": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        "jurisdictionId": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        "precinctId": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        "source": {"type": "string", "enum": [source.value for source in ElectionResultSource]}
+    },
+    "required": ["totalBallotsCast", "electionId", "jurisdictionId", "precinctId"],
+    "additionalProperties": False,
+}
+
+def validate_election_result(election_result: JSONDict):
+    validate(election_result, ELECTION_RESULT_SCHEMA)
+
+    if ElectionResult.query.filter_by(
+        election_id=election_result["electionId"],
+        jurisdiction_id=election_result["jurisdictionId"]
+    ).first():
+        raise Conflict("Results for this election and jurisdiction are already uploaded")
+
+
 @api.route("/election/<election_id>/jurisdiction/file", methods=["GET"])
 @restrict_access([UserType.ELECTION_ADMIN, UserType.JURISDICTION_ADMIN])
 def get_jurisdictions_file(election: Election):
@@ -107,7 +132,6 @@ def get_jurisdictions_file(election: Election):
         file=serialize_file(election.jurisdictions_file),
         processing=serialize_file_processing(election.jurisdictions_file),
     )
-
 
 @api.route("/election/<election_id>/jurisdiction/file", methods=["PUT"])
 @restrict_access([UserType.ELECTION_ADMIN])
@@ -124,4 +148,50 @@ def update_jurisdictions_file(election: Election):
 
     db_session.commit()
 
+    return jsonify(status="ok")
+
+
+@api.route("/election/<election_id>/jurisdiction/<jurisdiction_id>/results", methods=["GET"])
+@restrict_access([UserType.JURISDICTION_ADMIN])
+def check_election_result_status(election: Election, jurisdiction: Jurisdiction):
+    if ElectionResult.query.filter_by(election_id=election.id, jurisdiction_id=jurisdiction.id).one_or_none():
+        return jsonify(status="uploaded")
+    return jsonify(status="not-uploaded")
+
+@api.route("/election/<election_id>/jurisdiction/<jurisdiction_id>/results", methods=["POST"])
+@restrict_access([UserType.JURISDICTION_ADMIN])
+def load_election_results(election: Election, jurisdiction: Jurisdiction):
+    request_json = request.get_json()
+    election_result = {
+        'electionId': election.id,
+        'jurisdictionId': jurisdiction.id,
+        'precinctId': request_json['precinct'],
+        'totalBallotsCast': request_json['totalBallotsCast'],
+        'source': request_json['source']
+    }
+    validate_election_result(election_result)
+
+    election_result = ElectionResult(
+        id=str(uuid.uuid4()),
+        total_ballots_cast=election_result['totalBallotsCast'],
+        source=election_result['source'],
+        election_id=election_result['electionId'],
+        jurisdiction_id=election_result['jurisdictionId'],
+        precinct_id=election_result['precinctId']
+    )
+    db_session.add(election_result)
+    db_session.flush()
+
+    for itr_contest in request_json['contests']:
+        contest = Contest.query.filter_by(id=itr_contest['id']).one_or_none()
+        contest.election_result_id = election_result.id
+
+        for itr_candidate in itr_contest['candidates']:
+            candidate = Candidate.query.filter_by(id=itr_candidate['id']).one_or_none()
+            if itr_candidate['name'] == 'Write-in':
+                contest.write_in_votes = itr_candidate['numVotes']
+            else:
+                candidate.num_votes = itr_candidate['numVotes']
+    
+    db_session.commit()
     return jsonify(status="ok")

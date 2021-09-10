@@ -1,19 +1,23 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, Redirect } from  'react-router-dom'
 import { Cell } from 'react-table'
+
 import styled from 'styled-components'
-import { Button, ButtonGroup, Icon, Intent } from '@blueprintjs/core'
-import LinkButton from './Atoms/LinkButton'
+import { Button, ButtonGroup, Icon, Intent, H4 } from '@blueprintjs/core'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 import { Table } from './Atoms/Table'
+import { useModal, Modal } from './Atoms/Modal'
 import { useConfirm, Confirm } from './Atoms/Confirm'
+
 import { IElectionAdmin, useAuthDataContext } from './UserContext'
+import { IContest } from './ElectionContext'
+import { api } from './utilities'
+
 
 const DataTableWrapper = styled.div`
   width: 100%;
   margin-top: 30px;
 `
-
 const TableWrapper = styled.div`
   overflow-x: auto;
   scrollbar-width: 2px;
@@ -26,7 +30,6 @@ const TableWrapper = styled.div`
       border-radius: 10px;
   }
 `
-
 const SpacedButtonGroup = styled(ButtonGroup)`
   text-align: center;
   padding: 0 12px;
@@ -34,63 +37,95 @@ const SpacedButtonGroup = styled(ButtonGroup)`
     margin-right: 20px !important;
   }
 `
-
-const ActionButton = styled(LinkButton)`
-  width: 20px;
+const CongestedH4 = styled(H4)`
+  margin: 0;
+`
+const CongestedP = styled.p`
+  margin-bottom: 2px;
+`
+const TableDiv = styled.div`
+  p {
+    width: 100%;
+    margin: 0;
+    border-bottom: 1px solid;
+    display: flex;
+    flex-direction: row;
+  }
+  p:first-child {
+    border-top: 1px solid;
+  }
+  p>span:first-child {
+    width: 80%;
+  }
+  p>span:last-child {
+    width: 20%;
+    text-align: right;
+  }
 `
 
+interface IParams {
+  electionId: string;
+  jurisdictionId: string;
+}
+interface IElectionData {
+  id: number,
+  jurisdictionName: string,
+  fileName: string,
+  createdAt: Date | null,
+  source: string,
+  status: string,
+  totalBallotsCast: string;
+  contests: IContest[]
+}
+interface IResponse {
+  message: string;
+  data: IElectionData[];
+}
+
 const DataTable = ({ user }: { user: IElectionAdmin }) => {
-  interface IParams {
-    electionId: string;
-    jurisdictionId: string;
-  }
-
-  interface IElectionData {
-    id: number,
-    jurisdictionName: string,
-    fileName: string,
-    createdAt: Date | null,
-    source: string,
-    status: string
-  }
-
   const { electionId } = useParams<IParams>()
+  const [ electionResultsData, setelectionResultsData ] = useState<IElectionData[]>([])
+  const { modal, modalProps } = useModal()
   const { confirm, confirmProps } = useConfirm()
 
-  const tempData: IElectionData[] = [
-    {
-      id: 0,
-      jurisdictionName: 'Adams County',
-      fileName: 'Precinct1.elec',
-      createdAt: new Date(),
-      source: 'File',
-      status: 'Ready'
-    },
-    {
-      id: 1,
-      jurisdictionName: 'Adams County',
-      fileName: 'Precinct2.elec',
-      createdAt: new Date(),
-      source: 'Data Entry',
-      status: 'Failed'
-    },
-    {
-      id: 2,
-      jurisdictionName: 'Archuleta County',
-      fileName: 'Precinct 1 - EDay',
-      createdAt: new Date(),
-      source: 'Data Entry',
-      status: 'Published'
-    },
-    {
-      id: 3,
-      jurisdictionName: 'Beaver Creek County',
-      fileName: 'BeaverCreekPrecinct 1.txt',
-      createdAt: new Date(),
-      source: 'File',
-      status: 'Published'
+  // Init from Definition
+  useEffect( () => {
+    (async () => {
+      const response = await api<IResponse>(`/election/${electionId}/data`, { method: 'GET' })
+      if (response && response.message !== "No entry found!") {
+        setelectionResultsData(response.data)
+      } else {
+        
+      }
+    })()
+  }, [electionId])
+
+  const onClickViewJurisdiction = (fileName: string, totalBallotsCast: string, contests: IContest[]) => {
+    modal({
+      title: (fileName),
+      description: (
+        <>
+          {contests.map((contest)=>(
+            <div key={contest.id}>
+              <CongestedP>Town Name here</CongestedP>
+              <CongestedH4>{contest.name}</CongestedH4>
+              {/* Implement over and under votes formula */}
+              <p>{totalBallotsCast} ballots cast / {contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)-parseInt(totalBallotsCast)/2} overvotes / {parseInt(totalBallotsCast)/2 - contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)} undervotes</p>
+                  <TableDiv>
+                  {contest.candidates.map((candidate)=>(
+                    <p key={candidate.id}>
+                      <span>{candidate.name}</span>
+                      <span>{candidate.numVotes}</span>
+                    </p>
+                  ))}
+                  </TableDiv><br/>
+          </div>
+          )
+        )}
+        </>
+      )
     }
-  ]
+  )}
 
   const onClickReprocessJurisdiction = (id: number, jurisdictionName: string) => {
     confirm({
@@ -128,7 +163,7 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
       <h2>{user.organizations.map(organization => organization.elections.filter(election => election.id === electionId)[0])[0].electionName}</h2>
       <TableWrapper>
         <Table 
-          data={tempData}
+          data={electionResultsData}
           columns={[
             {
               Header: 'Jurisdiction Name',
@@ -159,9 +194,12 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
               Header: 'Actions',
               accessor: 'id',
               Cell: ({ row }: Cell) => {
+                const currRow = electionResultsData.filter(data=>data.id === row.values.id)[0]
                 return (
                   <SpacedButtonGroup>
-                    <ActionButton to={`/election`}><Icon icon="eye-open" intent={Intent.PRIMARY}></Icon></ActionButton>
+                    <Button onClick={() => onClickViewJurisdiction(row.values.fileName, currRow.totalBallotsCast, currRow.contests)}>
+                      <Icon icon="eye-open" intent={Intent.PRIMARY}></Icon>
+                    </Button>
                     <Button onClick={() => onClickReprocessJurisdiction(row.values.id, row.values.jurisdictionName)}>
                       <Icon icon="repeat" intent={Intent.SUCCESS}></Icon>
                     </Button>
@@ -176,6 +214,7 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
           ]}
         />
       </TableWrapper>
+      <Modal {...modalProps}></Modal>
       <Confirm {...confirmProps} />
     </DataTableWrapper>
   )

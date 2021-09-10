@@ -174,6 +174,33 @@ class Election(BaseModel):
         order_by="Party.name",
     )
 
+    # Precincts in the election
+    precincts = relationship(
+        "Precinct",
+        back_populates="election",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Precinct.name",
+    )
+
+    # Districts in the election
+    districts = relationship(
+        "District",
+        back_populates="election",
+        uselist=True,
+        passive_deletes=True,
+        order_by="District.name",
+    )
+
+    # Results of the election
+    results = relationship(
+        "ElectionResult",
+        back_populates="election",
+        uselist=True,
+        passive_deletes=True,
+        order_by="ElectionResult.id",
+    )
+
     # When a user deletes an election, we keep it in the database just in case
     # they change their mind, but flag it so that we can restrict access
     deleted_at = Column(UTCDateTime)
@@ -185,9 +212,62 @@ class Election(BaseModel):
     __table_args__ = (UniqueConstraint("organization_id", "election_name"),)
 
 
+class ElectionResultSource(str, enum.Enum):
+    FILE = "File"
+    DATA_ENTRY = "Data Entry"
+
+class ElectionResultStatus(str, enum.Enum):
+    READY="Ready"
+    FAILED="Failed"
+    PUBLISHED="Published"
+
+class ElectionResult(BaseModel):
+    id = Column(String(200), primary_key=True)
+    total_ballots_cast = Column(String(200), nullable=False)
+    source = Column(Enum(ElectionResultSource), nullable=False)
+    status = Column(Enum(ElectionResultStatus), default=ElectionResultStatus.READY, nullable=False)
+
+    #Election to which results belong
+    election_id = Column(
+        String(200),
+        ForeignKey("election.id", ondelete="cascade"),
+        nullable=False
+    )
+    election = relationship("Election", back_populates="results")
+    #Jurisdiction to which results belong
+    jurisdiction_id = Column(
+        String(200),
+        ForeignKey("jurisdiction.id", ondelete="cascade"),
+        nullable=False
+    )
+    jurisdiction = relationship("Jurisdiction")
+    #Precinct to which results belong
+    precinct_id = Column(
+        String(200),
+        ForeignKey("precinct.id", ondelete="cascade"),
+        nullable=False
+    )
+    precinct = relationship("Precinct")
+    # Contests in the election
+    contests = relationship(
+        "Contest",
+        back_populates="election_result",
+        uselist=True,
+        passive_deletes=True,
+        order_by="Contest.name",
+    )
+    # When a user deletes an election result, we keep it in the database just in case
+    # they change their mind, but flag it so that we can restrict access
+    deleted_at = Column(UTCDateTime)
+
+    __table_args__ = (UniqueConstraint("election_id", "jurisdiction_id"),)
+
+
 # these are typically counties
 class Jurisdiction(BaseModel):
     id = Column(String(200), primary_key=True)
+    name = Column(String(200), nullable=False)
+
     election_id = Column(
         String(200),
         ForeignKey("election.id", ondelete="cascade"),
@@ -195,14 +275,20 @@ class Jurisdiction(BaseModel):
     )
     election = relationship("Election", back_populates="jurisdictions")
 
-    name = Column(String(200), nullable=False)
-
-    __table_args__ = (UniqueConstraint("election_id", "name"),)
+    __table_args__ = (UniqueConstraint("name", "election_id"),)
 
 
 class District (BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(200), nullable=False)
+    definitions_file_id = Column(String(200), nullable=False)
+
+    election_id = Column(
+        String(200),
+        ForeignKey("election.id", ondelete="cascade"),
+        nullable=False
+    )
+    election = relationship("Election", back_populates="districts")
 
     # Contests in the district
     contests = relationship(
@@ -213,17 +299,30 @@ class District (BaseModel):
         order_by="Contest.name",
     )
 
+    __table_args__ = (UniqueConstraint("name", "election_id"),)
+
 
 class Precinct (BaseModel):
     id = Column(String(200), primary_key=True)
-    nmae = Column(String(200), nullable=False)
+    name = Column(String(200), nullable=False)
+    definitions_file_id = Column(String(200), nullable=False)
+
+    election_id = Column(
+        String(200),
+        ForeignKey("election.id", ondelete="cascade"),
+        nullable=False
+    )
+    election = relationship("Election", back_populates="precincts")
+
+    __table_args__ = (UniqueConstraint("name", "election_id"),)
 
 
 class Party (BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(200), nullable=False)
+    definitions_file_id = Column(String(200), nullable=False)
 
-    electionId = Column(
+    election_id = Column(
         String(200),
         ForeignKey("election.id", ondelete="cascade"),
         nullable=False
@@ -239,28 +338,39 @@ class Party (BaseModel):
         order_by="Candidate.name",
     )
 
+    __table_args__ = (UniqueConstraint("name", "election_id"),)
+
 
 class Contest (BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(200), nullable=False)
     type = Column(String(200), nullable=False)
     seats = Column(String(200), nullable=False)
-    allowedWriteIns = Column(Boolean, nullable=False)
-    total_ballots_cast = Column(Integer)
+    allow_write_ins = Column(Boolean, nullable=False)
+    write_in_votes = Column(Integer, nullable=True)
+    # total_ballots_cast = Column(Integer)
+    definitions_file_id = Column(String(200), nullable=False)
 
-    districtId = Column(
+    district_id = Column(
         String(200),
         ForeignKey("district.id", ondelete="cascade"),
-        nullable=False
+        nullable=True
     )
     district = relationship("District",back_populates="contests")
 
-    electionId = Column(
-        String(200), 
-        ForeignKey("election.id", ondelete="cascade"), 
+    election_id = Column(
+        String(200),
+        ForeignKey("election.id", ondelete="cascade"),
         nullable=False
     )
     election = relationship("Election", back_populates="contests")
+
+    election_result_id = Column(
+        String(200),
+        ForeignKey("election_result.id", ondelete="cascade"),
+        nullable=True
+    )
+    election_result = relationship("ElectionResult", back_populates="contests")
 
     # The candidates participating in the contest
     candidates = relationship(
@@ -271,16 +381,19 @@ class Contest (BaseModel):
         order_by="Candidate.name",
     )
 
+    __table_args__ = (UniqueConstraint("name", "district_id", "election_id"),)
+
 
 class Candidate (BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(200), nullable=False)
     num_votes = Column(Integer, nullable=True)
+    definitions_file_id = Column(String(200), nullable=False)
 
     party_id = Column(
         String(200),
         ForeignKey("party.id", ondelete="cascade"),
-        nullable=False
+        nullable=True
     )
     party = relationship("Party", back_populates="members")
 
@@ -290,6 +403,8 @@ class Candidate (BaseModel):
         nullable=False
     )
     contest = relationship("Contest", back_populates="candidates")
+
+    __table_args__ = (UniqueConstraint("name", "party_id", "contest_id"),)
 
 
 class User(BaseModel):
@@ -366,7 +481,7 @@ class File(BaseModel):
     name = Column(String(250), nullable=False)
     contents = deferred(Column(Text, nullable=False))
     uploaded_at = Column(
-        UTCDateTime, 
+        UTCDateTime,
         default=lambda: dt.now(timezone.utc),
         nullable=False
     )
