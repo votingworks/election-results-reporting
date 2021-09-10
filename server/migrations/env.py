@@ -7,7 +7,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-# Modify PYTHONPATH so that we can import the Arlo config
+# Modify PYTHONPATH so that we can import the Elrep config
 # https://stackoverflow.com/a/58891735
 sys.path = ["", ".."] + sys.path[1:]
 from server.config import DATABASE_URL
@@ -16,7 +16,7 @@ from server.config import DATABASE_URL
 # access to the values within the .ini file in use.
 config = context.config
 
-# Set the db url to use based on the Arlo config
+# Set the db url to use based on the Elrep config
 # https://stackoverflow.com/a/37891036
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 

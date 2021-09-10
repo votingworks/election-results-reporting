@@ -1,6 +1,6 @@
 # Migrations
 
-We use [Alembic](https://alembic.sqlalchemy.org/en/latest/) to create and run incremental database migrations when we change the Arlo data model.
+We use [Alembic](https://alembic.sqlalchemy.org/en/latest/) to create and run incremental database migrations when we change the Elrep data model.
 
 The Alembic docs have great info on the ins and outs of creating and running migrations, but here's a sample workflow:
 

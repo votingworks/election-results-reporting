@@ -121,7 +121,7 @@ const Header: React.FC<{}> = () => {
             <NavbarGroup align={Alignment.LEFT}>
               <a href="/support">
                 <Icon icon="eye-open" />
-                <span>Arlo Support Tools</span>
+                <span>Elrep Support Tools</span>
               </a>
             </NavbarGroup>
             <NavbarGroup align={Alignment.RIGHT}>
