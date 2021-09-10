@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "client"
+    }
+  ],
+  "settings": {
+    "remote.SSH.defaultForwardedPorts": [
+      {
+        "localPort": 3000,
+        "name": "Election Results Reporting Web",
+        "remotePort": 3000
+      }
+    ],
+    "python.formatting.provider": "black"
+  }
+}
