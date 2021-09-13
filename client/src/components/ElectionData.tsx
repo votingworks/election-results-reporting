@@ -40,9 +40,9 @@ const SpacedButtonGroup = styled(ButtonGroup)`
 const CongestedH4 = styled(H4)`
   margin: 0;
 `
-const CongestedP = styled.p`
-  margin-bottom: 2px;
-`
+// const CongestedP = styled.p`
+//   margin-bottom: 2px;
+// `
 const TableDiv = styled.div`
   p {
     width: 100%;
@@ -107,19 +107,21 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
         <>
           {contests.map((contest)=>(
             <div key={contest.id}>
-              <CongestedP>Town Name here</CongestedP>
+              {/* <CongestedP>Town Name here</CongestedP> */}
               <CongestedH4>{contest.name}</CongestedH4>
               {/* Implement over and under votes formula */}
-              <p>{totalBallotsCast} ballots cast / {contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)-parseInt(totalBallotsCast)/2} overvotes / {parseInt(totalBallotsCast)/2 - contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)} undervotes</p>
-                  <TableDiv>
-                  {contest.candidates.map((candidate)=>(
-                    <p key={candidate.id}>
-                      <span>{candidate.name}</span>
-                      <span>{candidate.numVotes}</span>
-                    </p>
-                  ))}
-                  </TableDiv><br/>
-          </div>
+              <p>{totalBallotsCast} ballots cast
+              {/* / {contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)-parseInt(totalBallotsCast)/2} overvotes / {parseInt(totalBallotsCast)/2 - contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)} undervotes */}
+              </p>
+              <TableDiv>
+              {contest.candidates.map((candidate)=>(
+                <p key={candidate.id}>
+                  <span>{candidate.name}</span>
+                  <span>{candidate.numVotes}</span>
+                </p>
+              ))}
+              </TableDiv><br/>
+            </div>
           )
         )}
         </>

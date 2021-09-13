@@ -25,7 +25,7 @@ install:
 
 install-development:
 	poetry install
-	yarn install & yarn upgrade
+	yarn install
 	yarn --cwd client install & yarn upgrade
 
 resettestdb:

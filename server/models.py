@@ -486,20 +486,10 @@ class File(BaseModel):
         nullable=False
     )
 
-    # Metadata for processing files in the background.
+    # Metadata for processing files.
     processing_started_at = Column(UTCDateTime)
     processing_completed_at = Column(UTCDateTime)
     processing_error = Column(Text)
-
-
-class BackgroundTask(BaseModel):
-    id = Column(String(200), primary_key=True)
-    task_name = Column(String(200), nullable=False)
-    payload = Column(JSON, nullable=False)
-
-    started_at = Column(UTCDateTime)
-    completed_at = Column(UTCDateTime)
-    error = Column(Text)
 
 
 class ActivityLogRecord(Base):

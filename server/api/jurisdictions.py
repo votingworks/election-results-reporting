@@ -182,6 +182,9 @@ def load_election_results(election: Election, jurisdiction: Jurisdiction):
     db_session.add(election_result)
     db_session.flush()
 
+    if len(request_json['contests']) != len(list({item for item in [itr_contest.id for itr_contest in request_json['contests']]})):
+        raise Conflict("Contests should be unique")
+
     for itr_contest in request_json['contests']:
         contest = Contest.query.filter_by(id=itr_contest['id']).one_or_none()
         contest.election_result_id = election_result.id

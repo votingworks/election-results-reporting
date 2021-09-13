@@ -16,6 +16,7 @@ import {
   Icon
 } from '@blueprintjs/core'
 import { useAuthDataContext } from './UserContext'
+import LinkButton from './Atoms/LinkButton'
 import { Inner } from './Atoms/Wrapper'
 
 const Nav = styled(Navbar)`
@@ -151,12 +152,21 @@ const Header: React.FC<{}> = () => {
                   />
                 </Link>
               </NavbarHeading>
+              <NavbarDivider />
               {jurisdiction && (
                 <NavbarHeading>Jurisdiction: {jurisdiction.name}</NavbarHeading>
               )}
-              <NavbarDivider />
             </NavbarGroup>&nbsp;
             <NavbarGroup align={Alignment.RIGHT}>
+              { auth && !auth.user && location.pathname !== '/admin' && (
+                <LinkButton
+                  icon="user"
+                  to={`/admin`}
+                  outlined
+                >
+                  Admin Login
+                </LinkButton>
+              )}
               { auth && auth.user && (
               <>
                 <UserMenu>

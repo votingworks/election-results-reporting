@@ -178,19 +178,20 @@ const ResultsDataForm = () => {
   const onSubmit = async (electionResultsData: IElectionResult) => {
     setSubmitting(true)
     electionResultsData.source="Data Entry"
-    const response: { status: string, errors: {errorType: string; message: string;}[] } | null = await api(`/election/${electionId}/jurisdiction/${jurisdictionId}/results`, {
-      method: 'POST',
-      body: JSON.stringify(electionResultsData),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    if (response && response.status === 'ok') {
-      window.location.reload()
-    } else {
-      setSubmitting(false)
-      toast.error("Err, Couldn't create election! Try Again")
-    }
+    console.dir(electionResultsData)
+    // const response: { status: string, errors: {errorType: string; message: string;}[] } | null = await api(`/election/${electionId}/jurisdiction/${jurisdictionId}/results`, {
+    //   method: 'POST',
+    //   body: JSON.stringify(electionResultsData),
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    // })
+    // if (response && response.status === 'ok') {
+    //   window.location.reload()
+    // } else {
+    //   setSubmitting(false)
+    //   toast.error("Err, Couldn't create election! Try Again")
+    // }
   }
 
   return (
@@ -272,7 +273,7 @@ const ResultsDataForm = () => {
                 <h3>Vote Totals</h3>
                 {values.contests.map((contest, i: number) => {
                   return (
-                    <div key={contest.id}>
+                    <div key={contest.id ? contest.id : i+1}>
                       <FormSection>
                         {/* eslint-disable jsx-a11y/label-has-associated-control */}
                         <label htmlFor={`contests[${i}].id`}>
@@ -288,8 +289,10 @@ const ResultsDataForm = () => {
                               }}
                               value={values.contests[i].id}
                               options={[...((values.precinct && electionDefinition && electionDefinition.contests) ?
-                                [{ value: '', label: 'Choose' }, ...electionDefinition.contests.map(contest=>({value: contest.id, label: contest.name}))] :
-                                [{ value: '', label: 'Choose' }])
+                                [{ value: '', label: 'Choose' }, ...electionDefinition.contests.filter(contest=>!values.contests.slice(0, i)
+                                    .map(contest=>contest.id).includes(contest.id))
+                                    .map(contest=>({value: contest.id, label: contest.name}))]
+                                  : [{ value: '', label: 'Choose' }])
                               ]}
                             />
                             <ErrorMessage name={`contests[${i}].id`} component={ErrorLabel} />
@@ -303,15 +306,17 @@ const ResultsDataForm = () => {
                               <label htmlFor={`contests[${i}].candidates[${j}].id`}>
                                 {candidate.name}
                                 {/* istanbul ignore next */}
-                                <Field
-                                  id={`contests[${i}].candidates[${j}].numVotes`}
-                                  name={`contests[${i}].candidates[${j}].numVotes`}
-                                  validate={testNumber()}
-                                  value={values.contests[i].candidates[j].numVotes}
-                                  // disabled={locked}
-                                  component={WideField}
-                                />
-                                <ErrorMessage name={`contests[${i}].candidates[${j}].numVotes`} component={ErrorLabel} />
+                                <div>
+                                  <Field
+                                    id={`contests[${i}].candidates[${j}].numVotes`}
+                                    name={`contests[${i}].candidates[${j}].numVotes`}
+                                    validate={testNumber()}
+                                    value={values.contests[i].candidates[j].numVotes}
+                                    // disabled={locked}
+                                    component={WideField}
+                                  />
+                                  <ErrorMessage name={`contests[${i}].candidates[${j}].numVotes`} component={ErrorLabel} />
+                                </div>
                               </label>
                             </FormSection>
                           )

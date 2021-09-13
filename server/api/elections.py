@@ -114,7 +114,7 @@ def bulk_update_from_definitions(
                 election=election
             )
             # if district exists, create contest with it
-            district = session.query(District).filter_by(definitions_file_id=itr_contest['districtId']).one_or_none()
+            district = session.query(District).filter_by(definitions_file_id=itr_contest['districtId']).first()
             if district:
                 contest.district=district
 
@@ -128,7 +128,7 @@ def bulk_update_from_definitions(
                     contest=contest
                 )
                 # if party exists, create candidate with it
-                party = session.query(Party).filter_by(definitions_file_id=itr_candidate['partyId']).one_or_none()
+                party = session.query(Party).filter_by(definitions_file_id=itr_candidate['partyId']).first()
                 if party:
                     candidate.party=party
                 session.add(candidate)

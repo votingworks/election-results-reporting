@@ -184,7 +184,7 @@ def electionadmin_login_callback():
             success_redirect = session["success_redirect_url"]
             session.pop("success_redirect_url", None)
             return redirect(success_redirect)
-    return jsonify(errors={ "message": "Oops, Invalid User!!" }), 400
+    return redirect('/admin')
 
 
 @auth.route("/auth/jurisdictionadmin/start")
@@ -212,7 +212,7 @@ def jurisdictionadmin_login_callback():
             success_redirect = session["success_redirect_url"]
             session.pop("success_redirect_url", None)
             return redirect(success_redirect)
-    return jsonify(errors={ "message": "Oops, Invalid User!!" }), 400
+    return redirect('/admin')
 
 
 @auth.errorhandler(OAuthError)
