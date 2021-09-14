@@ -178,20 +178,20 @@ const ResultsDataForm = () => {
   const onSubmit = async (electionResultsData: IElectionResult) => {
     setSubmitting(true)
     electionResultsData.source="Data Entry"
-    console.dir(electionResultsData)
-    // const response: { status: string, errors: {errorType: string; message: string;}[] } | null = await api(`/election/${electionId}/jurisdiction/${jurisdictionId}/results`, {
-    //   method: 'POST',
-    //   body: JSON.stringify(electionResultsData),
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    // })
-    // if (response && response.status === 'ok') {
-    //   window.location.reload()
-    // } else {
-    //   setSubmitting(false)
-    //   toast.error("Err, Couldn't create election! Try Again")
-    // }
+
+    const response: { status: string, errors: {errorType: string; message: string;}[] } | null = await api(`/election/${electionId}/jurisdiction/${jurisdictionId}/results`, {
+      method: 'POST',
+      body: JSON.stringify(electionResultsData),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    if (response && response.status === 'ok') {
+      window.location.reload()
+    } else {
+      setSubmitting(false)
+      toast.error("Err, Couldn't create election! Try Again")
+    }
   }
 
   return (
@@ -219,7 +219,9 @@ const ResultsDataForm = () => {
                   onChange={(e: React.FormEvent<HTMLSelectElement>) =>
                     setFieldValue('precinct', e.currentTarget.value)
                   }
+                  validate={(v: string) => (v ? undefined : 'Required')}
                   value={values.precinct}
+                  disabled={submitting}
                   options={[ ...((electionDefinition && electionDefinition.precincts) ? 
                     [{ value: '', label: 'Choose' }, ...electionDefinition.precincts.map(precinct=>({value: precinct.id, label: precinct.name}))] : 
                     [{ value: '', label: 'Choose' }])
@@ -242,7 +244,9 @@ const ResultsDataForm = () => {
                   onChange={(e: React.FormEvent<HTMLSelectElement>) =>
                     setFieldValue('ballotType', e.currentTarget.value)
                   }
+                  validate={(v: string) => (v ? undefined : 'Required')}
                   value={values.ballotType}
+                  disabled={submitting}
                   options={[ ...((electionDefinition && electionDefinition.ballotTypes) ?
                     [{ value: '', label: 'Choose' }, ...electionDefinition.ballotTypes.filter(ballotType=>ballotType.precincts.includes(values.precinct)).map(ballotType=>({value: ballotType.id, label: `Ballot ${ballotType.id}`}))] :
                     [{ value: '', label: 'Choose' }])
@@ -261,6 +265,7 @@ const ResultsDataForm = () => {
                 name="totalBallotsCast"
                 validate={testNumber()}
                 value={values.totalBallotsCast}
+                disabled={submitting}
                 component={WideField}
               />
             </label>
@@ -287,7 +292,9 @@ const ResultsDataForm = () => {
                                 setFieldValue(`contests[${i}].id`, e.currentTarget.value)
                                 setFieldValue(`contests[${i}].candidates`, populateCandidates(e.currentTarget.value))
                               }}
+                              validate={(v: string) => (v ? undefined : 'Required')}
                               value={values.contests[i].id}
+                              disabled={submitting}
                               options={[...((values.precinct && electionDefinition && electionDefinition.contests) ?
                                 [{ value: '', label: 'Choose' }, ...electionDefinition.contests.filter(contest=>!values.contests.slice(0, i)
                                     .map(contest=>contest.id).includes(contest.id))
@@ -308,14 +315,13 @@ const ResultsDataForm = () => {
                                 {/* istanbul ignore next */}
                                 <div>
                                   <Field
-                                    id={`contests[${i}].candidates[${j}].numVotes`}
+                                    id={`contests[${i}].candidates[${j}].id`}
                                     name={`contests[${i}].candidates[${j}].numVotes`}
                                     validate={testNumber()}
                                     value={values.contests[i].candidates[j].numVotes}
-                                    // disabled={locked}
+                                    disabled={submitting}
                                     component={WideField}
                                   />
-                                  <ErrorMessage name={`contests[${i}].candidates[${j}].numVotes`} component={ErrorLabel} />
                                 </div>
                               </label>
                             </FormSection>
