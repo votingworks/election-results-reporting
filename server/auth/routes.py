@@ -71,8 +71,8 @@ def serialize_election(election):
         "id": election.id,
         "electionName": election.election_name,
         "electionDate": election.election_date,
-        "pollsOpen": election.polls_open,
-        "pollsClose": election.polls_close,
+        "pollsOpen": election.polls_open_at,
+        "pollsClose": election.polls_close_at,
         "pollsTimezone": election.polls_timezone,
         "certificationDate": election.certification_date,
         "organizationId": election.organization_id

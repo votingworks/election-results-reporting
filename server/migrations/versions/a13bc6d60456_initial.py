@@ -1,10 +1,8 @@
 # pylint: disable=invalid-name
-"""initial
-
+"""Initial
 Revision ID: a13bc6d60456
 Revises: 
 Create Date: 2021-08-26 07:48:50.899848+00:00
-
 """
 from alembic import op
 import sqlalchemy as sa
@@ -79,8 +77,8 @@ def upgrade():
         sa.Column("id", sa.String(length=200), nullable=False),
         sa.Column("election_name", sa.String(length=200), nullable=True),
         sa.Column("election_date", sa.String(length=40), nullable=True),
-        sa.Column("polls_open", sa.String(length=5), nullable=True),
-        sa.Column("polls_close", sa.String(length=5), nullable=True),
+        sa.Column("polls_open_at", sa.String(length=5), nullable=True),
+        sa.Column("polls_close_at", sa.String(length=5), nullable=True),
         sa.Column("polls_timezone", sa.String(length=4), nullable=True),
         sa.Column("certification_date", sa.String(length=40), nullable=True),
         sa.Column("organization_id", sa.String(length=200), nullable=True),

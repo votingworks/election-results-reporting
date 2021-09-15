@@ -1,10 +1,8 @@
 # pylint: disable=invalid-name
-"""activity log
-
+"""Activity log
 Revision ID: 805383ee14b9
 Revises: a13bc6d60456
 Create Date: 2021-09-01 14:15:01.791381+00:00
-
 """
 from alembic import op
 import sqlalchemy as sa

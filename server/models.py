@@ -111,8 +111,8 @@ class Election(BaseModel):
 
     election_name = Column(String(200), nullable=False)
     election_date = Column(String(40), nullable=False)
-    polls_open = Column(String(5), nullable=False)
-    polls_close = Column(String(5), nullable=False)
+    polls_open_at = Column(String(5), nullable=False)
+    polls_close_at = Column(String(5), nullable=False)
     polls_timezone = Column(String(4), nullable=False)
     certification_date = Column(String(40), nullable=False)
 
@@ -275,7 +275,7 @@ class Jurisdiction(BaseModel):
     )
     election = relationship("Election", back_populates="jurisdictions")
 
-    __table_args__ = (UniqueConstraint("name", "election_id"),)
+    __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
 class District (BaseModel):
@@ -299,7 +299,7 @@ class District (BaseModel):
         order_by="Contest.name",
     )
 
-    __table_args__ = (UniqueConstraint("name", "election_id"),)
+    __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
 class Precinct (BaseModel):
@@ -314,7 +314,7 @@ class Precinct (BaseModel):
     )
     election = relationship("Election", back_populates="precincts")
 
-    __table_args__ = (UniqueConstraint("name", "election_id"),)
+    __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
 class Party (BaseModel):
@@ -338,7 +338,7 @@ class Party (BaseModel):
         order_by="Candidate.name",
     )
 
-    __table_args__ = (UniqueConstraint("name", "election_id"),)
+    __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
 class Contest (BaseModel):
@@ -381,7 +381,7 @@ class Contest (BaseModel):
         order_by="Candidate.name",
     )
 
-    __table_args__ = (UniqueConstraint("name", "district_id", "election_id"),)
+    __table_args__ = (UniqueConstraint("election_id", "district_id", "name"),)
 
 
 class Candidate (BaseModel):
@@ -404,7 +404,7 @@ class Candidate (BaseModel):
     )
     contest = relationship("Contest", back_populates="candidates")
 
-    __table_args__ = (UniqueConstraint("name", "party_id", "contest_id"),)
+    __table_args__ = (UniqueConstraint("contest_id", "party_id", "name"),)
 
 
 class User(BaseModel):

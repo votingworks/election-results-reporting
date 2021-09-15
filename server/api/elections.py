@@ -149,8 +149,8 @@ def create_election():
         id=str(uuid.uuid4()),
         election_name=election["electionName"],
         election_date=election["electionDate"],
-        polls_open=election["pollsOpen"],
-        polls_close=election["pollsClose"],
+        polls_open_at=election["pollsOpen"],
+        polls_close_at=election["pollsClose"],
         polls_timezone=election["pollsTimezone"],
         certification_date=election["certificationDate"],
         organization_id=election["organizationId"]

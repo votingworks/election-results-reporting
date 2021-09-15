@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Run commands from below file only once to seed database
-# ./client/cypress/seed-test-db.sh
 read -p "Is this your first run?: (y/n) " input
 
-if [[ "${input,,}" == "y" || "${input,,}" == "yes" ]]
+# Run commands from below file only once to seed database
+if [[ $(tr '[:upper:]' '[:lower:]' <<< "$input") == "y" || $(tr '[:upper:]' '[:lower:]' <<< "$input") == "yes" ]]
 then
     echo "Initializing Organization and Election Admin:"
     export FLASK_ENV=test
@@ -13,7 +12,6 @@ then
 fi
 
 # Below commands to be run on every app startup
-
 export ELREP_ELECTIONADMIN_AUTH0_BASE_URL="https://votingworks-noauth.herokuapp.com"
 export ELREP_JURISDICTIONADMIN_AUTH0_BASE_URL="https://votingworks-noauth.herokuapp.com"
 export ELREP_ELECTIONADMIN_AUTH0_CLIENT_ID="test"
