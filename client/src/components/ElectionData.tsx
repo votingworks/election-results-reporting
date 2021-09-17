@@ -202,9 +202,9 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
                     <Button onClick={() => onClickViewJurisdiction(row.values.fileName, currRow.totalBallotsCast, currRow.contests)}>
                       <Icon icon="eye-open" intent={Intent.PRIMARY}></Icon>
                     </Button>
-                    <Button onClick={() => onClickReprocessJurisdiction(row.values.id, row.values.jurisdictionName)}>
+                    {/* <Button onClick={() => onClickReprocessJurisdiction(row.values.id, row.values.jurisdictionName)}>
                       <Icon icon="repeat" intent={Intent.SUCCESS}></Icon>
-                    </Button>
+                    </Button> */}
                     <Button onClick={() => onClickDeleteJurisdiction(row.values.id, row.values.jurisdictionName)}>
                       <Icon icon="trash" intent={Intent.DANGER}></Icon>
                     </Button>

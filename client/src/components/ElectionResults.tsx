@@ -381,8 +381,8 @@ const ElectionResults: React.FC = () => {
     return (
       auth && auth.user && (
       <StatusBox
-        headline="Election results already uploaded!"
-        details={["Contact Election Administrator to upload again"]}
+        headline="Election results successfully entered!"
+        details={["You must contact the Election Administrator to re-enter election results"]}
         electionName={auth.user.jurisdictions.filter(jurisdiction=>jurisdiction.election.id===electionId)[0].election.electionName }
       />)
     )
