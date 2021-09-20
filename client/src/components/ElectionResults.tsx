@@ -2,11 +2,12 @@
 import React, { useEffect, useState, ReactElement } from 'react'
 import { useParams, Redirect } from 'react-router-dom'
 
-
 import { toast } from 'react-toastify'
 import { HTMLSelect, Callout, H3, H6 } from '@blueprintjs/core'
 import styled from 'styled-components'
 import { Wrapper, Inner } from './Atoms/Wrapper'
+
+import * as Yup from 'yup'
 
 import { Formik, FormikProps, Field, FieldArray, ErrorMessage } from 'formik'
 import FormSection from './Atoms/Form/FormSection'
@@ -18,7 +19,8 @@ import CSVFile, { IFileInfo } from './CSVForm/index'
 import { useAuthDataContext } from './UserContext'
 import { IPrecinct, IDistrict, ICandidate, IContest, IBallotType } from './ElectionContext'
 
-import { api, testNumber } from './utilities'
+import number from '../utils/number-schema'
+import { api } from './utilities'
 
 
 const SpacedH3 = styled(H3)`
@@ -123,7 +125,7 @@ interface IParams {
 }
 interface IDefinition {
   readonly contests: IContest[];
-  readonly districts: IDistrict[];
+  readonly districts?: IDistrict[];
   readonly precincts: IPrecinct[];
   readonly ballotTypes?: IBallotType[];
 }
@@ -194,6 +196,33 @@ const ResultsDataForm = () => {
     }
   }
 
+  const resultSchema = Yup.object().shape({
+    precinct: Yup.string().required('Required'),
+    totalBallotsCast: number()
+      .typeError('Must be a number')
+      .integer('Must be an integer')
+      .min(0, 'Must be a positive number')
+      .required('Required'),
+    contests: Yup.array()
+      .required()
+      .of(
+        Yup.object().shape({
+          id: Yup.string().required('Required'),
+          candidates: Yup.array()
+            .required()
+            .of(
+              Yup.object().shape({
+                numVotes: number()
+                  .typeError('Must be a number')
+                  .integer('Must be an integer')
+                  .min(0, 'Must be a positive number')
+                  .required('Required'),
+              })
+            ),
+        })
+      ),
+  })
+
   return (
     <Formik
       onSubmit={onSubmit}
@@ -203,6 +232,7 @@ const ResultsDataForm = () => {
         source: 'Data Entry',
         contests: dummyContests,
       }}
+      validationSchema={resultSchema}
     >
       {({ handleSubmit, setFieldValue, setValues, values }: FormikProps<IElectionResult>) => (
         <ResultsDataFormWrapper>
@@ -219,7 +249,6 @@ const ResultsDataForm = () => {
                   onChange={(e: React.FormEvent<HTMLSelectElement>) =>
                     setFieldValue('precinct', e.currentTarget.value)
                   }
-                  validate={(v: string) => (v ? undefined : 'Required')}
                   value={values.precinct}
                   disabled={submitting}
                   options={[ ...((electionDefinition && electionDefinition.precincts) ? 
@@ -231,31 +260,6 @@ const ResultsDataForm = () => {
               </div>
             </label>
           </FormSection>
-          {/* Add this later */}
-          {/* <FormSection> */}
-            {/* eslint-disable jsx-a11y/label-has-associated-control */}
-            {/* <label htmlFor="ballotType">
-              <p>Ballot Type</p>
-              <div>
-                <Field
-                  component={Select}
-                  id="ballotType"
-                  name="ballotType"
-                  onChange={(e: React.FormEvent<HTMLSelectElement>) =>
-                    setFieldValue('ballotType', e.currentTarget.value)
-                  }
-                  validate={(v: string) => (v ? undefined : 'Required')}
-                  value={values.ballotType}
-                  disabled={submitting}
-                  options={[ ...((electionDefinition && electionDefinition.ballotTypes) ?
-                    [{ value: '', label: 'Choose' }, ...electionDefinition.ballotTypes.filter(ballotType=>ballotType.precincts.includes(values.precinct)).map(ballotType=>({value: ballotType.id, label: `Ballot ${ballotType.id}`}))] :
-                    [{ value: '', label: 'Choose' }])
-                  ]}
-                />
-              <ErrorMessage name="ballotType" component={ErrorLabel} />
-              </div>
-            </label>
-          </FormSection> */}
           <FormSection>
             <label htmlFor="totalBallotsCast">
               Total Ballots Cast
@@ -263,7 +267,6 @@ const ResultsDataForm = () => {
               <Field
                 id="totalBallotsCast"
                 name="totalBallotsCast"
-                validate={testNumber()}
                 value={values.totalBallotsCast}
                 disabled={submitting}
                 component={WideField}
@@ -292,7 +295,6 @@ const ResultsDataForm = () => {
                                 setFieldValue(`contests[${i}].id`, e.currentTarget.value)
                                 setFieldValue(`contests[${i}].candidates`, populateCandidates(e.currentTarget.value))
                               }}
-                              validate={(v: string) => (v ? undefined : 'Required')}
                               value={values.contests[i].id}
                               disabled={submitting}
                               options={[...((values.precinct && electionDefinition && electionDefinition.contests) ?
@@ -317,7 +319,6 @@ const ResultsDataForm = () => {
                                   <Field
                                     id={`contests[${i}].candidates[${j}].id`}
                                     name={`contests[${i}].candidates[${j}].numVotes`}
-                                    validate={testNumber()}
                                     value={values.contests[i].candidates[j].numVotes}
                                     disabled={submitting}
                                     component={WideField}

@@ -1,23 +1,30 @@
 import React, { useState } from 'react'
 import { Redirect } from 'react-router-dom'
+
+import * as Yup from 'yup'
+
 import { toast } from 'react-toastify'
 import { ButtonGroup, FileInput, Callout } from '@blueprintjs/core'
 import styled from 'styled-components'
+
 import { Formik, FormikProps, Field } from 'formik'
 import LinkButton from './Atoms/LinkButton'
 import FormSection from './Atoms/Form/FormSection'
 import FormButton from './Atoms/Form/FormButton'
 import { ErrorLabel } from './Atoms/Form/_helpers'
-import { Wrapper, Inner } from './Atoms/Wrapper'
 import FormField from './Atoms/Form/FormField'
+
+import { Wrapper, Inner } from './Atoms/Wrapper'
 import { groupBy, sortBy } from '../utils/array'
 import { api } from './utilities'
+
 import {
   useAuthDataContext,
   IElectionAdmin,
   IElection,
   IJurisdictionAdmin
 } from './UserContext'
+import timezoneDict from '../data/timezone.json'
 
 
 const ResponsiveInner = styled(Inner)`
@@ -105,29 +112,45 @@ const InlineLabel = styled.label`
 const CreateElection = ({ user }: { user: IElectionAdmin }) => {
   const [submitting, setSubmitting] = useState(false)
 
+  interface ITimezone {
+    [key: string]: string;
+  }
+  const timezones:ITimezone = timezoneDict
+  const usrTz: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+
   interface IObjectIterableValues extends IElection {
     readonly [key: string]: any;
   }
 
   const onSubmit = async (newElection: IObjectIterableValues) => {
-    setSubmitting(true)
+    // setSubmitting(true)
     const formData: FormData = new FormData()
+    const datetimeFields = ['pollsOpen', 'pollsClose']
+    const fileFields = ['jurisdictions', 'electionDefinition']
 
     for (const key in newElection) {
-      if (key !== 'jurisdictions' && key!=='electionDefinition' ) {
-        formData.append(key, newElection[key])
+      if (datetimeFields.includes(key)) {
+        formData.append(
+          key,
+          new Date(`${newElection.electionDate}T${newElection[key]}`).toString().split("(")[0].trim()
+        )
+      } else if (fileFields.includes(key)) {
+        formData.append(
+          key, 
+          newElection[key] as Blob,
+          ( (newElection[key] && newElection[key].name ) ? newElection[key].name : undefined )
+        )
+      } else {
+        if (key !== 'certificationDate' && key !== 'electionDate') {
+          formData.append(key, newElection[key])
+        } else {
+          formData.append(
+            'certificationDate',
+            new Date(`${newElection.certificationDate}T00:00:00`).toString().split("(")[0].trim()
+          )
+        }
       }
     }
-    formData.append(
-      'jurisdictions', 
-      newElection.jurisdictions as Blob,
-      ( (newElection.jurisdictions && newElection.jurisdictions.name ) ? newElection.jurisdictions.name : undefined )
-    )
-    formData.append(
-      'definition', 
-      newElection.definition as Blob,
-      ( (newElection.definition && newElection.definition.name ) ? newElection.definition.name : undefined )
-    )
 
     const response: { status: string, electionId: string } | null = await api('/election', {
       method: 'POST',
@@ -141,6 +164,17 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
     }
   }
 
+  const electionSchema = Yup.object().shape({
+    electionName: Yup.string().required('Required'),
+    electionDate: Yup.string().required('Required'),
+    pollsOpen: Yup.string().required('Required'),
+    pollsClose: Yup.string().required('Required'),
+    pollsTimezone: Yup.string().required('Required'),
+    certificationDate: Yup.string().required('Required'),
+    jurisdictions: Yup.mixed().required('File required'),
+    definition: Yup.mixed().required('File required'),
+  })
+
   return (
     <Formik
       onSubmit={onSubmit}
@@ -151,11 +185,12 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
         electionDate: '',
         pollsOpen: '',
         pollsClose: '',
-        pollsTimezone: '',
+        pollsTimezone: timezones[`${usrTz}`] ? timezones[`${usrTz}`] : '',
         certificationDate: '',
         jurisdictions: null,
         definition: null,
       }}
+      validationSchema={electionSchema}
     >
       {({ 
         handleSubmit,
@@ -174,7 +209,6 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
                 id="electionName"
                 name="electionName"
                 type="text"
-                validate={(v: string) => (v ? undefined : 'Required')}
                 component={WideField}
               />
             </label>
@@ -187,7 +221,6 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
                 id="electionDate"
                 name="electionDate"
                 type="date"
-                validate={(v: string) => (v ? undefined : 'Required')}
                 component={WideField}
               />
             </label>
@@ -199,7 +232,6 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
                 id="pollsOpen"
                 name="pollsOpen"
                 type="time"
-                validate={(v: string) => (v ? undefined : 'Required')}
                 component={InlineFormField}
               />
             </InlineLabel>
@@ -209,7 +241,6 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
                 id="pollsClose"
                 name="pollsClose"
                 type="time"
-                validate={(v: string) => (v ? undefined : 'Required')}
                 component={InlineFormField}
               />
             </InlineLabel>
@@ -219,7 +250,6 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
                 id="pollsTimezone"
                 name="pollsTimezone"
                 type="text"
-                validate={(v: string) => (v ? undefined : 'Required')}
                 placeholder="CST"
                 component={WideField}
               />
@@ -233,7 +263,6 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
                 id="certificationDate"
                 name="certificationDate"
                 type="date"
-                validate={(v: string) => (v ? undefined : 'Required')}
                 component={WideField}
               />
             </label>

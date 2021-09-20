@@ -32,16 +32,6 @@ def upgrade():
             ),
             nullable=False,
         ),
-        sa.Column(
-            "status",
-            sa.Enum(
-                "READY",
-                "FAILED",
-                "PUBLISHED",
-                name="election_results_status",
-            ),
-            nullable=False,
-        ),
         sa.Column("deleted_at", sa.DateTime(), nullable=True),
         sa.Column("election_id", sa.String(length=200), nullable=False),
         sa.ForeignKeyConstraint(

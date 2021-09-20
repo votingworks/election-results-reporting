@@ -16,6 +16,7 @@ const StyledTable = styled.table`
   td {
     margin: 0;
     padding: 0.5rem 0.4rem;
+    text-align: center;
   }
   tr:nth-child(even) {
     background-color: #f5f8fa; /* BlueprintJS light-gray5 */

@@ -1,3 +1,4 @@
+from datetime import datetime
 from urllib.parse import urljoin, urlencode
 from flask import redirect, jsonify, request, session
 from authlib.integrations.flask_client import OAuth, OAuthError
@@ -70,11 +71,11 @@ def serialize_election(election):
     return {
         "id": election.id,
         "electionName": election.election_name,
-        "electionDate": election.election_date,
+        # "electionDate": str(election.polls_open_at.date()),
         "pollsOpen": election.polls_open_at,
         "pollsClose": election.polls_close_at,
         "pollsTimezone": election.polls_timezone,
-        "certificationDate": election.certification_date,
+        "certificationDate": str(election.certification_date.date()),
         "organizationId": election.organization_id
     }
 

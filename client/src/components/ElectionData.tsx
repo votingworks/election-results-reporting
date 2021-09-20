@@ -7,7 +7,6 @@ import { Button, ButtonGroup, Icon, Intent, H4 } from '@blueprintjs/core'
 import { Wrapper, Inner } from './Atoms/Wrapper'
 import { Table } from './Atoms/Table'
 import { useModal, Modal } from './Atoms/Modal'
-import { useConfirm, Confirm } from './Atoms/Confirm'
 
 import { IElectionAdmin, useAuthDataContext } from './UserContext'
 import { IContest } from './ElectionContext'
@@ -40,9 +39,7 @@ const SpacedButtonGroup = styled(ButtonGroup)`
 const CongestedH4 = styled(H4)`
   margin: 0;
 `
-// const CongestedP = styled.p`
-//   margin-bottom: 2px;
-// `
+
 const TableDiv = styled.div`
   p {
     width: 100%;
@@ -86,7 +83,6 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
   const { electionId } = useParams<IParams>()
   const [ electionResultsData, setelectionResultsData ] = useState<IElectionData[]>([])
   const { modal, modalProps } = useModal()
-  const { confirm, confirmProps } = useConfirm()
 
   // Init from Definition
   useEffect( () => {
@@ -107,11 +103,9 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
         <>
           {contests.map((contest)=>(
             <div key={contest.id}>
-              {/* <CongestedP>Town Name here</CongestedP> */}
               <CongestedH4>{contest.name}</CongestedH4>
               {/* Implement over and under votes formula */}
               <p>{totalBallotsCast} ballots cast
-              {/* / {contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)-parseInt(totalBallotsCast)/2} overvotes / {parseInt(totalBallotsCast)/2 - contest.candidates.map(candidate => candidate.numVotes).reduce((prev, curr) => prev+parseInt(curr), 0)} undervotes */}
               </p>
               <TableDiv>
               {contest.candidates.map((candidate)=>(
@@ -128,37 +122,6 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
       )
     }
   )}
-
-  const onClickReprocessJurisdiction = (id: number, jurisdictionName: string) => {
-    confirm({
-      title: 'Confirm',
-      description: (
-        <div>
-          <p>Are you sure you want to reprocess {jurisdictionName}?</p>
-        </div>
-      ),
-      yesButtonLabel: 'Reprocess',
-      yesButtonIntent: Intent.SUCCESS,
-      onYesClick: async () => alert('Reprocessed Successfully'),
-    })
-  }
-
-  const onClickDeleteJurisdiction = (id: number, jurisdictionName: string) => {
-    confirm({
-      title: 'Confirm',
-      description: (
-        <div>
-          <p>Are you sure you want to delete {jurisdictionName}?</p>
-          <p>
-            <strong>Warning: this action cannot be undone.</strong>
-          </p>
-        </div>
-      ),
-      yesButtonLabel: 'Delete',
-      yesButtonIntent: Intent.DANGER,
-      onYesClick: async () => alert('Deleted Successfully'),
-    })
-  }
 
   return (
     <DataTableWrapper>
@@ -189,10 +152,6 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
               disableSortBy: true
             },
             {
-              Header: 'Status',
-              accessor: 'status'
-            },
-            {
               Header: 'Actions',
               accessor: 'id',
               Cell: ({ row }: Cell) => {
@@ -201,12 +160,6 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
                   <SpacedButtonGroup>
                     <Button onClick={() => onClickViewJurisdiction(row.values.fileName, currRow.totalBallotsCast, currRow.contests)}>
                       <Icon icon="eye-open" intent={Intent.PRIMARY}></Icon>
-                    </Button>
-                    {/* <Button onClick={() => onClickReprocessJurisdiction(row.values.id, row.values.jurisdictionName)}>
-                      <Icon icon="repeat" intent={Intent.SUCCESS}></Icon>
-                    </Button> */}
-                    <Button onClick={() => onClickDeleteJurisdiction(row.values.id, row.values.jurisdictionName)}>
-                      <Icon icon="trash" intent={Intent.DANGER}></Icon>
                     </Button>
                   </SpacedButtonGroup>
                 )
@@ -217,7 +170,6 @@ const DataTable = ({ user }: { user: IElectionAdmin }) => {
         />
       </TableWrapper>
       <Modal {...modalProps}></Modal>
-      <Confirm {...confirmProps} />
     </DataTableWrapper>
   )
 }

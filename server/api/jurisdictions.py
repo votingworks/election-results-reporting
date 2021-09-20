@@ -145,9 +145,7 @@ def update_jurisdictions_file(election: Election):
         name=jurisdictions_file.filename,
         contents=decode_csv_file(jurisdictions_file),
     )
-
     db_session.commit()
-
     return jsonify(status="ok")
 
 
@@ -182,7 +180,7 @@ def load_election_results(election: Election, jurisdiction: Jurisdiction):
     db_session.add(election_result)
     db_session.flush()
 
-    if len(request_json['contests']) != len(list({item for item in [itr_contest['id'] for itr_contest in request_json['contests']]})):
+    if len(request_json['contests']) != len(list(set(item for item in [itr_contest['id'] for itr_contest in request_json['contests']]))):
         raise Conflict("Contests should be unique")
 
     for itr_contest in request_json['contests']:
@@ -195,6 +193,5 @@ def load_election_results(election: Election, jurisdiction: Jurisdiction):
                 contest.write_in_votes = itr_candidate['numVotes']
             else:
                 candidate.num_votes = itr_candidate['numVotes']
-    
     db_session.commit()
     return jsonify(status="ok")

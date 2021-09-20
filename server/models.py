@@ -110,11 +110,10 @@ class Election(BaseModel):
     id = Column(String(200), primary_key=True)
 
     election_name = Column(String(200), nullable=False)
-    election_date = Column(String(40), nullable=False)
-    polls_open_at = Column(String(5), nullable=False)
-    polls_close_at = Column(String(5), nullable=False)
+    polls_open_at = Column(UTCDateTime, nullable=False)
+    polls_close_at = Column(UTCDateTime, nullable=False)
     polls_timezone = Column(String(4), nullable=False)
-    certification_date = Column(String(40), nullable=False)
+    certification_date = Column(UTCDateTime, nullable=False)
 
     # Who does this election belong to?
     organization_id = Column(
@@ -165,15 +164,6 @@ class Election(BaseModel):
         order_by="Contest.name",
     )
 
-    # Parties in the election
-    parties = relationship(
-        "Party",
-        back_populates="election",
-        uselist=True,
-        passive_deletes=True,
-        order_by="Party.name",
-    )
-
     # Precincts in the election
     precincts = relationship(
         "Precinct",
@@ -181,15 +171,6 @@ class Election(BaseModel):
         uselist=True,
         passive_deletes=True,
         order_by="Precinct.name",
-    )
-
-    # Districts in the election
-    districts = relationship(
-        "District",
-        back_populates="election",
-        uselist=True,
-        passive_deletes=True,
-        order_by="District.name",
     )
 
     # Results of the election
@@ -216,16 +197,11 @@ class ElectionResultSource(str, enum.Enum):
     FILE = "File"
     DATA_ENTRY = "Data Entry"
 
-class ElectionResultStatus(str, enum.Enum):
-    READY="Ready"
-    FAILED="Failed"
-    PUBLISHED="Published"
 
 class ElectionResult(BaseModel):
     id = Column(String(200), primary_key=True)
     total_ballots_cast = Column(String(200), nullable=False)
     source = Column(Enum(ElectionResultSource), nullable=False)
-    status = Column(Enum(ElectionResultStatus), default=ElectionResultStatus.READY, nullable=False)
 
     #Election to which results belong
     election_id = Column(
@@ -278,30 +254,6 @@ class Jurisdiction(BaseModel):
     __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
-class District (BaseModel):
-    id = Column(String(200), primary_key=True)
-    name = Column(String(200), nullable=False)
-    definitions_file_id = Column(String(200), nullable=False)
-
-    election_id = Column(
-        String(200),
-        ForeignKey("election.id", ondelete="cascade"),
-        nullable=False
-    )
-    election = relationship("Election", back_populates="districts")
-
-    # Contests in the district
-    contests = relationship(
-        "Contest",
-        back_populates="district",
-        uselist=True,
-        passive_deletes=True,
-        order_by="Contest.name",
-    )
-
-    __table_args__ = (UniqueConstraint("election_id", "name"),)
-
-
 class Precinct (BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(200), nullable=False)
@@ -317,30 +269,6 @@ class Precinct (BaseModel):
     __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
-class Party (BaseModel):
-    id = Column(String(200), primary_key=True)
-    name = Column(String(200), nullable=False)
-    definitions_file_id = Column(String(200), nullable=False)
-
-    election_id = Column(
-        String(200),
-        ForeignKey("election.id", ondelete="cascade"),
-        nullable=False
-    )
-    election = relationship("Election", back_populates="parties")
-
-    # The members of the party
-    members = relationship(
-        "Candidate",
-        back_populates="party",
-        uselist=True,
-        passive_deletes=True,
-        order_by="Candidate.name",
-    )
-
-    __table_args__ = (UniqueConstraint("election_id", "name"),)
-
-
 class Contest (BaseModel):
     id = Column(String(200), primary_key=True)
     name = Column(String(200), nullable=False)
@@ -350,13 +278,6 @@ class Contest (BaseModel):
     write_in_votes = Column(Integer, nullable=True)
     # total_ballots_cast = Column(Integer)
     definitions_file_id = Column(String(200), nullable=False)
-
-    district_id = Column(
-        String(200),
-        ForeignKey("district.id", ondelete="cascade"),
-        nullable=True
-    )
-    district = relationship("District",back_populates="contests")
 
     election_id = Column(
         String(200),
@@ -381,7 +302,7 @@ class Contest (BaseModel):
         order_by="Candidate.name",
     )
 
-    __table_args__ = (UniqueConstraint("election_id", "district_id", "name"),)
+    __table_args__ = (UniqueConstraint("election_id", "name"),)
 
 
 class Candidate (BaseModel):
@@ -390,13 +311,6 @@ class Candidate (BaseModel):
     num_votes = Column(Integer, nullable=True)
     definitions_file_id = Column(String(200), nullable=False)
 
-    party_id = Column(
-        String(200),
-        ForeignKey("party.id", ondelete="cascade"),
-        nullable=True
-    )
-    party = relationship("Party", back_populates="members")
-
     contest_id = Column(
         String(200),
         ForeignKey("contest.id", ondelete="cascade"),
@@ -404,7 +318,7 @@ class Candidate (BaseModel):
     )
     contest = relationship("Contest", back_populates="candidates")
 
-    __table_args__ = (UniqueConstraint("contest_id", "party_id", "name"),)
+    __table_args__ = (UniqueConstraint("contest_id", "name"),)
 
 
 class User(BaseModel):

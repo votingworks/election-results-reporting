@@ -6,7 +6,7 @@ from .config import DATABASE_URL
 
 # Based on https://flask.palletsprojects.com/en/1.1.x/patterns/sqlalchemy/#declarative
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, connect_args={"options": "-c timezone=utc"})
 db_session = scoped_session(sessionmaker(autocommit=False, autoflush=True, bind=engine))
 
 meta = MetaData(

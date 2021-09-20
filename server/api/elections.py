@@ -28,17 +28,13 @@ ELECTION_SCHEMA = {
     "type": "object",
     "properties": {
         "electionName": {"type": "string"},
-        "electionDate": {"type": "string"},
-
-        "pollsOpen": {"type": "string"},
-        "pollsClose": {"type": "string"},
+        "pollsOpen": {"type": "string", "format": "date-time"},
+        "pollsClose": {"type": "string", "format": "date-time"},
         "pollsTimezone": {"type": "string"},
-
-        "certificationDate": {"type": "string"},
-
+        "certificationDate": {"type": "string", "format": "date-time"},
         "organizationId": {"anyOf": [{"type": "string"}, {"type": "null"}]},
     },
-    "required": ["organizationId", "electionName", "electionDate", "pollsOpen", "pollsClose", "pollsTimezone", "certificationDate"],
+    "required": ["organizationId", "electionName", "pollsOpen", "pollsClose", "pollsTimezone", "certificationDate"],
     "additionalProperties": False,
 }
 
@@ -68,7 +64,7 @@ def bulk_update_from_definitions(
     session, election: Election, definition_json
 ) -> None:
     """
-    Updates the precincts, districts,  for an election all at once. Requires a SQLAlchemy session to use,
+    Updates the precincts for an election all at once. Requires a SQLAlchemy session to use,
     and uses a nested transaction to ensure the changes made are atomic. Depending on your
     session configuration, you may need to explicitly call `commit()` on the session to flush
     changes to the database.
@@ -83,24 +79,6 @@ def bulk_update_from_definitions(
                 election=election
             )
             session.add(precinct)
-        # populate district table
-        for itr_district in definition_json['districts']:
-            district = District(
-                id=str(uuid.uuid4()),
-                name=itr_district['name'],
-                definitions_file_id=itr_district['id'],
-                election=election
-            )
-            session.add(district)
-        # populate party table
-        for itr_party in definition_json['parties']:
-            party = Party(
-                id=str(uuid.uuid4()),
-                name=itr_party['fullName'],
-                definitions_file_id=itr_party['id'],
-                election=election
-            )
-            session.add(party)
         # populate contest table
         for itr_contest in definition_json['contests']:
             contest = Contest(
@@ -110,13 +88,8 @@ def bulk_update_from_definitions(
                 seats=itr_contest['seats'],
                 allow_write_ins=itr_contest['allowWriteIns'],
                 definitions_file_id=itr_contest['id'],
-                district=district,
                 election=election
             )
-            # if district exists, create contest with it
-            district = session.query(District).filter_by(definitions_file_id=itr_contest['districtId']).first()
-            if district:
-                contest.district=district
 
             session.add(contest)
             # populate candidate table
@@ -127,17 +100,60 @@ def bulk_update_from_definitions(
                     definitions_file_id=itr_candidate['id'],
                     contest=contest
                 )
-                # if party exists, create candidate with it
-                party = session.query(Party).filter_by(definitions_file_id=itr_candidate['partyId']).first()
-                if party:
-                    candidate.party=party
                 session.add(candidate)
 
+
+DEFINITION_FILE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "precincts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"},
+                },
+                "required": ["id", "name"],
+                "additionalProperties": True,
+            },
+        },
+        "contests": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "type": {"type": "string"},
+                    "title": {"type": "string"},
+                    "seats": {"type": "integer"},
+                    "allowWriteIns": {"type": "boolean"},
+                    "candidates": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "name": {"type": "string"},
+                            },
+                            "required": ["id", "name"],
+                            "additionalProperties": True,
+                        },
+                    },
+                },
+                "required": ["id", "type", "title", "seats", "allowWriteIns", "candidates"],
+                "additionalProperties": True,
+            },
+        },
+    },
+    "required": ["precincts", "contests"],
+    "additionalProperties": True,
+}
 
 @api.route("/election", methods=["POST"])
 @restrict_access([UserType.ELECTION_ADMIN])
 def create_election():
-    required_fields = ["organizationId", "electionName", "electionDate", "pollsOpen", "pollsClose", "pollsTimezone", "certificationDate"]
+    required_fields = ["organizationId", "electionName", "pollsOpen", "pollsClose", "pollsTimezone", "certificationDate"]
     election = {field : request.values[field] for field in request.values if field in required_fields}
     validate_new_election(election)
     if "jurisdictions" not in request.files:
@@ -145,14 +161,17 @@ def create_election():
     if "definition" not in request.files:
         raise Conflict("Missing required file parameter 'election definition'")
 
+    input_dt_format = "%a %b %d %Y %H:%M:%S %Z%z"
+    election['pollsOpen'] = datetime.strptime(election['pollsOpen'], input_dt_format).astimezone(tz=timezone.utc)
+    election['pollsClose'] = datetime.strptime(election['pollsClose'], input_dt_format).astimezone(tz=timezone.utc)
+    election['certificationDate'] = datetime.strptime(election['certificationDate'], input_dt_format).replace(tzinfo=timezone.utc)
     election = Election(
         id=str(uuid.uuid4()),
         election_name=election["electionName"],
-        election_date=election["electionDate"],
-        polls_open_at=election["pollsOpen"],
-        polls_close_at=election["pollsClose"],
+        polls_open_at=election['pollsOpen'],
+        polls_close_at=election['pollsClose'],
         polls_timezone=election["pollsTimezone"],
-        certification_date=election["certificationDate"],
+        certification_date=election['certificationDate'],
         organization_id=election["organizationId"]
     )
 
@@ -167,7 +186,7 @@ def create_election():
     election.definition_file = File(
         id=str(uuid.uuid4()),
         name=definition_file.filename,
-        contents=decode_json_file(definition_file)
+        contents=decode_json_file(definition_file, DEFINITION_FILE_SCHEMA)
     )
 
     check_access([UserType.ELECTION_ADMIN], election)
@@ -212,8 +231,7 @@ def get_definition_file(election: Election):
         contest['candidates'] = [{key: itr_candidate.__dict__[key] for key in itr_candidate.__dict__.keys() & {'id', 'name'} } for itr_candidate in itr_contest.candidates]
         contests.append(contest)
     precincts = [{key:itr_precinct.__dict__[key] for key in itr_precinct.__dict__.keys() & {'id', 'name'} } for itr_precinct in election.precincts]
-    districts = [{key:itr_district.__dict__[key] for key in itr_district.__dict__.keys() & {'id', 'name'} } for itr_district in election.districts]
-    return jsonify(contests=contests, districts=districts, precincts=precincts)
+    return jsonify(contests=contests, precincts=precincts)
 
 
 @api.route("/election/<election_id>/data", methods=["GET"])
@@ -223,7 +241,7 @@ def get_election_data(election: Election):
     election_results = ElectionResult.query.filter_by(election_id=election.id).all()
     if election_results:
         for itr_result in election_results:
-            election_data_record = {key: itr_result.__dict__[key] for key in itr_result.__dict__.keys() & {'id', 'source', 'status'}}
+            election_data_record = {key: itr_result.__dict__[key] for key in itr_result.__dict__.keys() & {'id', 'source'}}
             election_data_record['createdAt'] = itr_result.created_at
             election_data_record['totalBallotsCast'] = itr_result.total_ballots_cast
             election_data_record['jurisdictionName'] = itr_result.jurisdiction.name
