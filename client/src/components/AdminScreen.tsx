@@ -123,7 +123,7 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
   }
 
   const onSubmit = async (newElection: IObjectIterableValues) => {
-    // setSubmitting(true)
+    setSubmitting(true)
     const formData: FormData = new FormData()
     const datetimeFields = ['pollsOpen', 'pollsClose']
     const fileFields = ['jurisdictions', 'electionDefinition']

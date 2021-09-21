@@ -81,8 +81,7 @@ def upgrade():
         sa.Column("polls_timezone", sa.String(length=4), nullable=False),
         sa.Column("certification_date", sa.DateTime(), nullable=False),
         sa.Column("organization_id", sa.String(length=200), nullable=False),
-        sa.Column("jurisdictions_file_id", sa.String(length=200), nullable=False),
-        sa.Column("definition_file_id", sa.String(length=200), nullable=False),
+        sa.Column("jurisdictions_file_id", sa.String(length=200), nullable=True),
         sa.Column("definition_file_id", sa.String(length=200), nullable=True),
         sa.Column("deleted_at", sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(

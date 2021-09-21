@@ -16,11 +16,6 @@ export interface IPrecinct {
   name: string;
 }
 
-export interface IDistrict {
-  id: string;
-  name: string;
-}
-
 export interface IBallotType {
   id: string;
   name?: string;

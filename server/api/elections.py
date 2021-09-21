@@ -167,22 +167,22 @@ def create_election():
     election['certificationDate'] = datetime.strptime(election['certificationDate'], input_dt_format).replace(tzinfo=timezone.utc)
     election = Election(
         id=str(uuid.uuid4()),
-        election_name=election["electionName"],
+        election_name=election['electionName'],
         polls_open_at=election['pollsOpen'],
         polls_close_at=election['pollsClose'],
-        polls_timezone=election["pollsTimezone"],
+        polls_timezone=election['pollsTimezone'],
         certification_date=election['certificationDate'],
-        organization_id=election["organizationId"]
+        organization_id=election['organizationId']
     )
 
-    jurisdictions_file = request.files["jurisdictions"]
+    jurisdictions_file = request.files['jurisdictions']
     election.jurisdictions_file = File(
         id=str(uuid.uuid4()),
         name=jurisdictions_file.filename,
         contents=decode_csv_file(jurisdictions_file)
     )
 
-    definition_file = request.files["definition"]
+    definition_file = request.files['definition']
     election.definition_file = File(
         id=str(uuid.uuid4()),
         name=definition_file.filename,

@@ -17,7 +17,7 @@ import { ErrorLabel } from './Atoms/Form/_helpers'
 import CSVFile, { IFileInfo } from './CSVForm/index'
 
 import { useAuthDataContext } from './UserContext'
-import { IPrecinct, IDistrict, ICandidate, IContest, IBallotType } from './ElectionContext'
+import { IPrecinct, ICandidate, IContest, IBallotType } from './ElectionContext'
 
 import number from '../utils/number-schema'
 import { api } from './utilities'
@@ -125,7 +125,6 @@ interface IParams {
 }
 interface IDefinition {
   readonly contests: IContest[];
-  readonly districts?: IDistrict[];
   readonly precincts: IPrecinct[];
   readonly ballotTypes?: IBallotType[];
 }
