@@ -347,6 +347,7 @@ const ActiveElections = ({ user }: { user: IElectionAdmin }) => {
       <h2>Active Elections</h2>
       {sortBy(user.organizations, o => o.name).map(organization => (
         <div key={organization.id}>
+          <h4>{organization.name}</h4>
           {organization.elections.length === 0 ? (
             <p>
               You haven&apos;t created any elections yet for {organization.name}

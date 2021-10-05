@@ -26,7 +26,7 @@ install:
 install-development:
 	poetry install
 	yarn install
-	yarn --cwd client install & yarn upgrade
+	yarn --cwd "client" install & yarn upgrade
 
 resettestdb:
 	FLASK_ENV=test make resetdb

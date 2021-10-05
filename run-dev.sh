@@ -26,4 +26,4 @@ trap 'kill 0' SIGINT SIGHUP
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 poetry run python -m server.main &
-yarn --cwd client start
+yarn --cwd "client" start

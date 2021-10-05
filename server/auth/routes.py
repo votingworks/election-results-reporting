@@ -1,4 +1,3 @@
-from datetime import datetime
 from urllib.parse import urljoin, urlencode
 from flask import redirect, jsonify, request, session
 from authlib.integrations.flask_client import OAuth, OAuthError

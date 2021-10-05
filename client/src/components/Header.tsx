@@ -139,7 +139,7 @@ const Header: React.FC<{}> = () => {
           <InnerBar>
             <NavbarGroup align={Alignment.LEFT}>
               <NavbarHeading>
-                <Link to={location.pathname !== "/" ? "/admin" : "/"}>
+                <Link to={location.pathname === "/" || location.pathname === "/admin" ? "/" : "/admin"}>
                   <img
                     src="/elrep.png"
                     alt="Election Results Reporting, by VotingWorks"
@@ -158,7 +158,7 @@ const Header: React.FC<{}> = () => {
               )}
             </NavbarGroup>&nbsp;
             <NavbarGroup align={Alignment.RIGHT}>
-              { auth && !auth.user && location.pathname !== '/admin' && (
+              { auth && !auth.user && location.pathname === '/' && (
                 <LinkButton
                   icon="user"
                   to={`/admin`}

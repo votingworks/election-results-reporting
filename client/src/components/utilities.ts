@@ -22,7 +22,7 @@ export const api = async <T>(
       if (response.status === 401) {
         window.location.assign(
           encodeURI(
-            '/?error=unauthorized&message=You have been logged out due to inactivity.'
+            '/admin?error=unauthorized&message=You have been logged out due to inactivity.'
           )
         )
         return null
