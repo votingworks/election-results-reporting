@@ -5,10 +5,10 @@ read -p "Is this your first run?: (y/n) " input
 if [[ $(tr '[:upper:]' '[:lower:]' <<< "$input") == "y" || $(tr '[:upper:]' '[:lower:]' <<< "$input") == "yes" ]]
 then
     echo "Initializing Organization and Election Admin:"
-    export FLASK_ENV=test
+    export FLASK_ENV=development
     poetry run python -m scripts.cleardb
-    ORG_ID=`poetry run python -m scripts.create-org "Cypress Test Org"`
-    poetry run python -m scripts.create-admin $ORG_ID "election-admin-cypress@example.com"
+    ORG_ID=`poetry run python -m scripts.create-org "Test Organization"`
+    poetry run python -m scripts.create-admin $ORG_ID "election-admin@example.com"
 fi
 
 # Below commands to be run on every app startup

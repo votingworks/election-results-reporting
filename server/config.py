@@ -18,7 +18,7 @@ def setup_flask_config() -> Tuple[str, bool]:
     Specifically, setting FLASK_ENV=test by itself means `app.debug` will remain
     `False`, which isn't what we want.
     """
-    flask_env = os.environ.get("FLASK_ENV", "development")
+    flask_env = os.environ.get("FLASK_ENV", "production")
 
     if "FLASK_DEBUG" not in os.environ:
         os.environ["FLASK_DEBUG"] = str(flask_env in DEVELOPMENT_ENVS)
@@ -34,7 +34,7 @@ TEST_DATABASE_URL = "postgresql://elrep:elrep@localhost:5432/elreptest"
 
 
 def read_database_url_config() -> str:
-    environment_database_url = os.environ.get("DATABASE_URL", DEVELOPMENT_DATABASE_URL)
+    environment_database_url = os.environ.get("DATABASE_URL", None)
     if environment_database_url:
         return environment_database_url
 

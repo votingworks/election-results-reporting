@@ -56,4 +56,7 @@ test-server-coverage:
 	poetry run pytest -n auto --cov=.
 
 run-dev:
-	./run-dev.sh 
+	./run-dev.sh
+
+seed-testdb:
+	./run-test.sh
