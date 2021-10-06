@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#008080" />
+  <meta name="description" content="Election Results - Warren County, State of Mississippi" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/vicksburg192.png" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  <meta property="og:title" content="Election Results - Warren County, State of Mississippi" />
+  <meta property="og:url" content="%PUBLIC_URL%" />
+  <meta property="og:description" content="Election Reporting for Vicksburg Municipal General Election" />
+  <meta property="og:image" content="%PUBLIC_URL%/vicksburg512.png" />
+
+  <title>Election Results Reporting (by VotingWorks)</title>
+  <script type="text/javascript">
+    // Inject environment variables from the Flask backend by rendering this
+    // HTML page as a template. Note that when running with `yarn start` or
+    // `yarn test`, this file will be served by a dev server, not through
+    // Flask, so these variables can't get populated.
+    window._elrep_flask_env = "development"
+    window._elrep_sentry_dsn = ''
+    // NODE_ENV is 'production' only when running `yarn build`
+    if ("%NODE_ENV%" === 'production') {
+      window._elrep_flask_env = '{{ flask_env }}'
+      window._elrep_sentry_dsn = '{{ sentry_dsn }}'
+    }
+  </script>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
+
+</html>

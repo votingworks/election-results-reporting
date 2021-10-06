@@ -1,0 +1,84 @@
+/* Reset */
+html {
+  box-sizing: border-box;
+  line-height: 1;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+fieldset {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+legend {
+  display: block;
+}
+
+button {
+  font-size: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+:link,
+:visited {
+  color: rgb(0, 0, 238);
+}
+
+:focus {
+  /* outline: rgb(77, 144, 254) dashed 0.25rem; */
+  outline: none;
+}
+
+/* Foundational */
+html,
+body,
+#root {
+  height: 100%;
+}
+@media print {
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+small {
+  font-size: 0.9em;
+}
+
+/* Print */
+@media print {
+  * {
+    background: #ffffff;
+    color: #000000;
+  }
+}

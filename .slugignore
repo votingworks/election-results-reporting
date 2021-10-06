@@ -1,0 +1,4 @@
+client/**/_mocks.ts
+client/**/*.test.*
+client/**/testUtilities.tsx
+client/src/test/**
