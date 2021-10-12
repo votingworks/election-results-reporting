@@ -258,7 +258,7 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
           <FormSection>
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label htmlFor="certificationDate">
-              <p>Certification Date</p>
+              <p>Certification date</p>
               <Field
                 id="certificationDate"
                 name="certificationDate"
@@ -270,7 +270,7 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
           <FormSection>
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label htmlFor="jurisdictions">
-              <p>Participating Jurisdictions</p>
+              <p>Participating jurisdictions</p>
               <FileInput
                 inputProps={{
                   accept: '.csv',
@@ -296,7 +296,7 @@ const CreateElection = ({ user }: { user: IElectionAdmin }) => {
           <FormSection>
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label htmlFor="definition">
-              <p>Election Definition</p>
+              <p>Election definition</p>
               <FileInput
                 inputProps={{
                   accept: '.json',
