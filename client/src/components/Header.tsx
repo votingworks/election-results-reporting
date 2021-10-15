@@ -129,7 +129,7 @@ const Header: React.FC<{}> = () => {
             <NavbarGroup align={Alignment.RIGHT}>
               <span>{auth.supportUser.email}</span>
               <NavbarDivider />
-              <a href="/auth/support/logout">Log out</a>
+              <CustomMenuItem text="Log out" href="/auth/support/logout" icon="log-out" />
             </NavbarGroup>
           </InnerBar>
         </SupportBar>

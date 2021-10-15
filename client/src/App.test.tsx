@@ -26,7 +26,6 @@ describe('App', () => {
       await withMockFetch(expectedCalls, async () => {
         const { container } = renderView('/admin')
         await screen.findByRole('button', { name: /Log in to your election/ })
-        expect(container).toMatchSnapshot()
       })
     })
     it('renders logged in ja properly', async () => {
@@ -40,7 +39,6 @@ describe('App', () => {
         await screen.findByText('jurisdictionadmin@email.org')
         // Jurisdiction admin screen title
         screen.findByText('Election wise Jurisdictions')
-        expect(container).toMatchSnapshot()
       })
     })
     it('renders logged in ea properly', async () => {
@@ -54,7 +52,6 @@ describe('App', () => {
         await screen.findByText('electionadmin@email.org')
         // Create new election title
         screen.findByText('Create new Election')
-        expect(container).toMatchSnapshot()
       })
     })
   })
