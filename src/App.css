@@ -47,23 +47,6 @@ button {
   outline: none;
 }
 
-/* Foundational */
-html,
-body,
-#root {
-  height: 100%;
-  overflow: hidden;
-  touch-action: none;
-}
-@media print {
-  html,
-  body,
-  #root {
-    height: auto;
-    overflow: visible;
-  }
-}
-
 /* Typography */body {
   margin: 0;
   font-size: 16px;

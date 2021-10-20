@@ -90,7 +90,7 @@ const NavTab = styled.button<{ active?: boolean }>`
 `
 const Main = styled.div`
   display: flex;
-  height: 100%;
+  min-height: 100vh;
 `
 const MainChild = styled.div`
   margin: auto;
