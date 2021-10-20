@@ -88,7 +88,13 @@ const NavTab = styled.button<{ active?: boolean }>`
   font-size: 1.15rem;
   text-decoration: none;
 `
-
+const Main = styled.div`
+  display: flex;
+  height: 100%;
+`
+const MainChild = styled.div`
+  margin: auto;
+`
 const Container = styled.div`
   width: 100%;
   max-width: 1200px;
@@ -379,19 +385,32 @@ const App: React.FC = () => {
 
   if (!electionHash) {
     return(
-      <Container>
-        <Refresh>An election hash is required.</Refresh>
-      </Container>
+      <Main>
+        <MainChild>
+          <Refresh>An election hash is required.</Refresh>
+        </MainChild>
+      </Main>
     )
   }
 
   if (!election) {
     return(
-      <Container>
-        <Refresh>Loading election…</Refresh>
-      </Container>
+      <Main>
+        <MainChild>
+          <Refresh>Fetching the election definition…</Refresh>
+        </MainChild>
+      </Main>
     )
   } else {
+    if (!tallies) {
+      return (
+        <Main>
+          <MainChild>
+            <Refresh>Fetching election results…</Refresh>
+          </MainChild>
+        </Main>
+      )
+    }
     return (
       <div>
         <NavigationBanner>
@@ -412,12 +431,7 @@ const App: React.FC = () => {
             </Navigation>
           </Container>
         </NavigationBanner>
-        {currentPage === 'results' && !tallies && (
-          <Container>
-            <Refresh>Loading results…</Refresh>
-          </Container>
-        )}
-        {currentPage === 'results' && tallies && (
+        {currentPage === 'results' && (
           <React.Fragment>
             <Container>
               <PageHeader>
