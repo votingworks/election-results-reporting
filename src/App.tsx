@@ -9,6 +9,7 @@ import { ServerResult } from './config/types'
 import {
   localeLongDateAndTime,
   localeWeekdayAndDate,
+  localeDate,
 } from './utils/IntlDateTimeFormats'
 import { strict as assert } from 'assert'
 
@@ -353,6 +354,8 @@ const App: React.FC = () => {
   useEffect(() => {
     if (election) {
       fetchTallies()
+      const documentTitle = `Election Results - ${localeDate.format(new Date(election.date))} ${election.title}, ${election.county.name}, ${election.state}`
+      document.title = documentTitle
     }
   }, [election])
 
