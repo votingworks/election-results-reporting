@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
-import dashify from 'dashify'
 import styled from 'styled-components'
+import pluralize from 'pluralize'
 
-import { ResultsCandidates, Results} from './config/types'
+import { CandidateContest, CompressedTally, Election } from '@votingworks/types'
+import { readCompressedTally } from '@votingworks/utils'
+import { ServerResult } from './config/types'
 import {
   localeLongDateAndTime,
   localeWeekdayAndDate,
 } from './utils/IntlDateTimeFormats'
-
-import election from './data/err-election.json'
 
 const NoWrap = styled.span`
   white-space: nowrap;
@@ -113,24 +113,9 @@ const LastUpdated = styled.p`
   font-size: 0.9rem;
 `
 
-const ResultsBanner = styled.p`
-    padding: 1rem;
-    border: 3px solid #ffaa13;
-    margin-top: 1rem;
-    background: #ffc55d;
-    border-radius: 0.3rem;
-    color: #003334;
-    font-size: 1.25rem;
-    font-weight: 600;
-    text-align: center;
-  `
 const ElectionTitle = styled.h2`
   margin-top: 0.5rem;
   font-size: 1.5rem;
-`
-
-const DataPoint = styled.div`
-  margin-top: 0.5rem;
 `
 
 const Actions = styled.div`
@@ -188,6 +173,13 @@ const Contest = styled.div`
     border: 1px solid #000000;
     box-shadow: none;
   }
+`
+const ContestMeta = styled.div`
+  padding-top: 0.5rem;
+  border-top: 1px solid #999999;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
 `
 const ContestSection = styled.div`
   font-size: 0.9rem;
@@ -263,73 +255,6 @@ const Refresh = styled.p`
     display: none;
   }
 `
-
-const PrecinctsHeading = styled.h2`
-  margin: 1rem 0 0;
-`
-const PrecinctsList = styled.div`
-  display: grid;
-  margin-bottom: 1rem;
-  grid-column-gap: 1rem;
-  grid-row-gap: 1rem;
-  grid-template-columns: repeat(1, 1fr);
-  @media print {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 568px) {
-    margin-right: 1rem;
-    margin-left: 1rem;
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  @media (min-width: ${1200 + (2 * 16)}px) {
-    margin-right: 0;
-    margin-left: 0;
-    grid-template-columns: repeat(4, 1fr);
-  }
-`
-const Precinct = styled.div`
-  flex: 1;
-  padding: 1rem;
-  background: #ffffff;
-  box-shadow: 0 1px 4px #666666;
-  break-inside: avoid;
-  @media (min-width: 568px) {
-    border-radius: 0.3rem;
-  }
-  @media print {
-    border: 1px solid #000000;
-    box-shadow: none;
-  }
-`
-const PrecinctName = styled.h3`
-  margin-bottom: 0.25rem;
-`
-const PrecinctAddress = styled.div`
-  margin-bottom: 0.25rem;
-  &::before {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    margin-right: 0.25rem;
-    background: bottom center url('${process.env.PUBLIC_URL}/icons/map-marker-regular.svg') no-repeat;
-    content: '';
-    vertical-align: text-bottom;
-  }
-`
-const SampleBallots = styled.div`
-  &::before {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    margin-right: 0.25rem;
-    background: bottom center url('${process.env.PUBLIC_URL}/icons/ballot-check-regular.svg') no-repeat;
-    content: '';
-    vertical-align: text-bottom;
-  }
-`
 const PoweredByVotingWorks = styled.p`
   display: flex;
   align-items: center;
@@ -362,81 +287,89 @@ const formatPercentage = (a: number, b: number): string =>
     const quotient = b === 0 ? 0 : a / b
     return `${(Math.round(quotient * 10000) / 100).toFixed(2)}%`
   }
-const getPartyById = (id: string) =>
-  election.parties.find((party) => party.id === id)
-const sumCandidateVotes = (candidates: ResultsCandidates): number =>
-  Object.keys(candidates).reduce((sum, key) => sum + candidates[key], 0)
-const datesAreOnSameDay = (first: Date, second: Date): boolean =>
-  first.getFullYear() === second.getFullYear() &&
-  first.getMonth() === second.getMonth() &&
-  first.getDate() === second.getDate();
 
-// pre-election || during-election || post-election
+const sumCompressedTallies = (compressedTallies: CompressedTally[]): CompressedTally =>
+  compressedTallies.reduce(
+    (sum, tally) => sum.length === 0
+      ? tally
+      : sum.map(
+        (contest, contestIndex) => contest.map(
+          (option, tallyIndex) => option + tally[contestIndex][tallyIndex]
+        )
+      ),
+    []
+  )
+
 const refreshInterval = 60
 const App: React.FC = () => {
+  const electionHash = process.env.REACT_APP_ELECTION_HASH
 
-  const getElectionStatus = () => {
-    const now = new Date()
-    if (now <= new Date(election.polls.openAt)) {
-      return 'pre-election'
-    }
-    if (now >= new Date(election.polls.closeAt)) {
-      return 'post-election'
-    }
-    return 'during-election'
-  }
-  const isElectionDay = datesAreOnSameDay(new Date(), new Date(election.date))
-  const [ electionStatus, setElectionStatus ] = useState(getElectionStatus)
-  const [ results, setResults ] = useState<Results | undefined>(undefined)
+  const [ election, setElection ] = useState<Election | undefined>(undefined)
+  const [ tallies, setTallies ] = useState<ServerResult[] | undefined>(undefined)
   const [ refreshCountdown, setRefreshCountdown ] = useState(0)
 
-  const hasResults = !!results?.ballotsCounted
-  const [ currentPage, setCurrentPage ] = useState(hasResults ? 'results' : 'info')
+  const hasResults = !!tallies?.length
+  const [ currentPage, setCurrentPage ] = useState('results')
 
-  const fetchResults = async () => {
-    const response = await fetch(process.env.REACT_APP_API || "https://err-backend-worker.votingworks.workers.dev/warren")
+  const fetchElection = async () => {
+    const response = await fetch(`https://results.voting.works/election/${process.env.REACT_APP_ELECTION_HASH}/definition`)
     if (response.status >= 200 && response.status <= 299) {
-      const jsonResponse: Results = await response.json()
+      const jsonResponse: Election = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
-        setResults(jsonResponse)
-	setCurrentPage((!!jsonResponse?.ballotsCounted) ? 'results' : 'info')
+        setElection(jsonResponse)
+      }
+    }
+  }
+
+  const fetchTallies = async () => {
+    const response = await fetch(`https://results.voting.works/election/${process.env.REACT_APP_ELECTION_HASH}/tallies/${process.env.REACT_APP_IS_LIVE || 0}`)
+    if (response.status >= 200 && response.status <= 299) {
+      const jsonResponse: ServerResult[] = await response.json()
+      if (Object.keys(jsonResponse).length !== 0) {
+        setTallies(jsonResponse)
       }
     } else {
       console.log(response.status, response.statusText);
     }
   }
 
-  const electionDayPhrase = isElectionDay
-    ? 'Election Day is today.'
-    : electionStatus === 'post-election'
-      ? `Election Day was ${localeWeekdayAndDate.format(new Date(election.date))}.`
-      : `Election Day is ${localeWeekdayAndDate.format(new Date(election.date))}.`
-
-  const pollsOpenPhrase = electionStatus === "post-election"
-    ? 'Polls are closed.'
-    : 'Polls are open 7am – 7pm.'
-
-  // Certification date is in YYYY-MM-DD format. Update to JS date with proper timezone.
-  const electionTimezoneOffset = new Date(election.date).getTimezoneOffset()
-  const resultsCertificationDate = results?.certificationDate && new Date(results.certificationDate)
-  const certificationDate = resultsCertificationDate && resultsCertificationDate.setMinutes(resultsCertificationDate.getMinutes() + electionTimezoneOffset)
-
   // Init Results
   useEffect(() => {
-    fetchResults()
+    fetchElection()
   }, [])
+
+  useEffect(() => {
+    if (election) {
+      fetchTallies()
+    }
+  }, [election])
 
   // Refresh Results
   useEffect(() => {
     const timer = setTimeout(() => {
       setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
-      setElectionStatus(getElectionStatus)
       if (refreshCountdown === 0) {
-        fetchResults()
+        fetchTallies()
       }
     }, refreshInterval * 1000);
     return () => clearTimeout(timer)
   })
+
+  const lastUpdatedDate = (tallies?.map((machine) => machine.seconds_since_epoch)[0] || 0) * 1000
+  const summedTallies = sumCompressedTallies(tallies?.map((t) => t.tally) || [])
+
+  const fullContestTallies = election && tallies && readCompressedTally(
+    election,
+    summedTallies,
+    0,
+    { foo: 0}
+  ).contestTallies
+
+  const electionCandidateContests = election?.contests.map((contest) => {
+    if (contest.type === "candidate") {
+      return contest
+    }
+  }) as CandidateContest[] | undefined
 
   const PoweredBy = () => (
     <Container>
@@ -444,198 +377,152 @@ const App: React.FC = () => {
     </Container>
   )
 
-  return (
-    <div>
-      <NavigationBanner>
-        <Container>
-          <Navigation>
-            <Brand>
-              <SealImg
-                src={election.sealURL}
-                alt="seal"
-              />
-            </Brand>
-            <NavigationContent>
-              <NavHeader>City of Vicksburg, {election.state}</NavHeader>
-              <NavTabs>
-                <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
-                <NavTab active={currentPage === 'info'} onClick={() => setCurrentPage('info')}>Voting Info</NavTab>
-              </NavTabs>
-            </NavigationContent>
-          </Navigation>
-        </Container>
-      </NavigationBanner>
-      {currentPage === 'results' && !results && (
-        <Container>
-          <Refresh>Loading results…</Refresh>
-        </Container>
-      )}
-      {currentPage === 'results' && results && (
-        <React.Fragment>
+  if (!electionHash) {
+    return(
+      <Container>
+        <Refresh>An election hash is required.</Refresh>
+      </Container>
+    )
+  }
+
+  if (!election) {
+    return(
+      <Container>
+        <Refresh>Loading election…</Refresh>
+      </Container>
+    )
+  } else {
+    return (
+      <div>
+        <NavigationBanner>
           <Container>
-            <PageHeader>
-              {hasResults && (
-                <Actions>
-                  <Button onClick={window.print}>Print Results</Button>
-                </Actions>
-              )}
-              <Headline>
-                {results?.isOfficial ? 'Official Results':'Unofficial Results'}
-              </Headline>
-              <LastUpdated>
-                Results last updated on{' '}
-                <NoWrap><strong>{localeLongDateAndTime.format(new Date(results.lastUpdatedDate))}</strong></NoWrap>.{' '}
-                This page will automatically refresh when new results data are available.
-              </LastUpdated>
-              <LastUpdated>
-              Official results will be finalized when the election is certified on{' '}
-                <NoWrap>{localeWeekdayAndDate.format(certificationDate)}</NoWrap>.
-              </LastUpdated>
-              <ElectionTitle>{election.title}</ElectionTitle>
-              <ElectionDate>
-                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
-                <NoWrap>{pollsOpenPhrase}</NoWrap>
-              </ElectionDate>
-              {hasResults ? (
-                <DataPoint>
-                  <NoWrap>{formatPercentage(results.ballotsCounted, results.registeredVoterCount)} voter turnout =</NoWrap>{' '}
-                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters /</NoWrap>{' '}
-                  <NoWrap>
-                    {
-                      results.isOfficial
-                        ? `${results.ballotsCounted.toLocaleString()} ballots counted`
-                        : `${results.ballotsCounted.toLocaleString()} ballots counted thus far`
-                    }
-                  </NoWrap>
-                </DataPoint>
-              ) : (
-	      <>
-                <DataPoint>
-                  <NoWrap>{results.registeredVoterCount.toLocaleString()} registered voters</NoWrap>
-                </DataPoint>
-              <ResultsBanner>
-                Election results data will become available after polls close.
-             </ResultsBanner>
-	      </>
-              )}
-            </PageHeader>
+            <Navigation>
+              <Brand>
+                <SealImg
+                  src={election.sealURL}
+                  alt="seal"
+                />
+              </Brand>
+              <NavigationContent>
+                <NavHeader>{election.county.name}, {election.state}</NavHeader>
+                <NavTabs>
+                  <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
+                </NavTabs>
+              </NavigationContent>
+            </Navigation>
           </Container>
+        </NavigationBanner>
+        {currentPage === 'results' && !tallies && (
           <Container>
-            <Contests>
-              {election.contests.map(
-                ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
-                  const contestVotes = sumCandidateVotes(
-                    results.contests[contestId].candidates
-                  )
-                  const writeIn = {
-                    id: 'writeIn',
-                    name: 'Write-In',
-                    partyId: ''
-                  }
-                  const candidates = [
-                    ...contestCandidates,
-                    writeIn,
-                  ]
-                  return (
-                    <Contest key={contestId}>
-                      <Row>
+            <Refresh>Loading results…</Refresh>
+          </Container>
+        )}
+        {currentPage === 'results' && tallies && (
+          <React.Fragment>
+            <Container>
+              <PageHeader>
+                {hasResults && (
+                  <Actions>
+                    <Button onClick={window.print}>Print Results</Button>
+                  </Actions>
+                )}
+                <Headline>
+                  Unofficial Results
+                </Headline>
+                {!!lastUpdatedDate && (
+                  <LastUpdated>
+                    Last updated on{' '}
+                    <NoWrap>{localeLongDateAndTime.format(new Date(lastUpdatedDate))}</NoWrap>.{' '}
+                    Results do not contain absentee ballot counts.
+                  </LastUpdated>
+                )}
+                <ElectionTitle>{election.title}</ElectionTitle>
+                <ElectionDate>
+                  <NoWrap>{localeWeekdayAndDate.format(new Date(election.date))}</NoWrap>
+                </ElectionDate>
+              </PageHeader>
+            </Container>
+            <Container>
+              <Contests>
+                {electionCandidateContests?.map(
+                  ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
+                    const contestTally = fullContestTallies[contestId]
+                    const { ballots, undervotes, overvotes } = contestTally.metadata
+                    const writeIn = {
+                      id: '__write-in',
+                      name: 'write-in',
+                      partyId: ''
+                    }
+                    const candidates = [
+                      ...contestCandidates,
+                      writeIn,
+                    ]
+                    return (
+                      <Contest key={contestId}>
+                        <Row>
+                          <div>
+                            <ContestSection>{section}</ContestSection>
+                            <ContestTitle>{title}</ContestTitle>
+                          </div>
+                          {seats > 1 && (
+                            <CandidateDataColumn>
+                              <CandidateDetail>
+                                {seats} seat
+                              </CandidateDetail>
+                            </CandidateDataColumn>
+                          )}
+                        </Row>
                         <div>
-                          <ContestSection>{section}</ContestSection>
-                          <ContestTitle>{title}</ContestTitle>
+                          {candidates
+                            .sort((a, b) =>
+                              fullContestTallies[contestId].tallies[b.id].tally
+                              - fullContestTallies[contestId].tallies[a.id].tally
+                            )
+                            .map(({ id: candidateId, name, partyId }) => {
+                              const candidateVotes = contestTally.tallies[candidateId].tally
+                              const candidateParty = election.parties.find((p) => p.id === partyId)?.name
+                              return (
+                                <Candidate key={candidateId}>
+                                  <CandidateProgressBar>
+                                    <div style={{ width: formatPercentage(candidateVotes, ballots) }} />
+                                  </CandidateProgressBar>
+                                  <CandidateRow data-percentage="50%">
+                                    <CandidateDataColumn>
+                                      <CandidateMain as="h3">{name}</CandidateMain>
+                                      <CandidateDetail>{candidateParty}</CandidateDetail>
+                                    </CandidateDataColumn>
+                                    <CandidateDataColumn>
+                                      <CandidateMain>
+                                        {formatPercentage(candidateVotes, ballots)}
+                                      </CandidateMain>
+                                      <CandidateDetail>{pluralize('vote', candidateVotes, true)}</CandidateDetail>
+                                    </CandidateDataColumn>
+                                  </CandidateRow>
+                                </Candidate>
+                              )
+                            })
+                          }
+                          <ContestMeta>
+                            <NoWrap>{pluralize('ballots', ballots, true)}</NoWrap> /{' '}
+                            <NoWrap>{pluralize('undervotes', undervotes, true)}</NoWrap> /{' '}
+                            <NoWrap>{pluralize('overvotes', overvotes, true)}</NoWrap>
+                          </ContestMeta>
                         </div>
-                        <CandidateDataColumn>
-                          <CandidateDetail>
-                            {seats} winner
-                          </CandidateDetail>
-                        </CandidateDataColumn>
-                      </Row>
-                      <div>
-                        {candidates
-                          .sort((a, b) =>
-                            results.contests[contestId].candidates[b.id]
-                            - results.contests[contestId].candidates[a.id]
-                          )
-                          .map(({ id: candidateId, name, partyId }) => {
-                          const candidateVotes =
-                            results.contests[contestId].candidates[candidateId]
-                          return (
-                            <Candidate key={candidateId}>
-                              <CandidateProgressBar>
-                                <div style={{ width: formatPercentage(candidateVotes, contestVotes) }} />
-                              </CandidateProgressBar>
-                              <CandidateRow data-percentage="50%">
-                                <CandidateDataColumn>
-                                  <CandidateMain as="h3">{name}</CandidateMain>
-                                  <CandidateDetail>{getPartyById(partyId)?.name}</CandidateDetail>
-                                </CandidateDataColumn>
-                                <CandidateDataColumn>
-                                  <CandidateMain>
-                                    {formatPercentage(candidateVotes, contestVotes)}
-                                  </CandidateMain>
-                                  <CandidateDetail>{candidateVotes} votes</CandidateDetail>
-                                </CandidateDataColumn>
-                              </CandidateRow>
-                            </Candidate>
-                          )
-                        })}
-                      </div>
-                    </Contest>
-                  )
-                }
-              )}
-            </Contests>
-          </Container>
-          <Container>
-            <Refresh>This page will automatically refresh when new results data are available.</Refresh>
-          </Container>
-          <PoweredBy />
-        </React.Fragment>
-      )}
-      {currentPage === 'info' && (
-        <React.Fragment>
-          <Container>
-            <PageHeader>
-              <ElectionTitle as="h1">{election.title}</ElectionTitle>
-              <ElectionDate>
-                <NoWrap>{electionDayPhrase}</NoWrap>{' '}
-                <NoWrap>{pollsOpenPhrase}</NoWrap>{' '}
-              </ElectionDate>
-              <PrecinctsHeading>Local Precincts</PrecinctsHeading>
-              <ElectionDate>
-                If you don’t know your polling place, please call the City of Vicksburg’s City Clerk’s Office at <NoWrap as="a" href="tel:+16016344553">601-634-4553</NoWrap>.
-              </ElectionDate>
-            </PageHeader>
-            <PrecinctsList>
-              {election.precincts.sort((a, b) => (a.name.localeCompare(b.name))).map(({ id: precinctId, name, address }) => (
-                <Precinct key={precinctId}>
-                  <PrecinctName>{name}</PrecinctName>
-                  <PrecinctAddress>
-                    {address ? (
-                      <a href={`https://maps.google.com/?q=${address}`}>
-                        {address.split(',')[0]}
-                      </a>
-                    ) : (
-                      <em>no address provided</em>
-                    )}
-                  </PrecinctAddress>
-                  <SampleBallots>
-                    {
-                      election.ballotStyles
-                        .filter((bs) => bs.precincts.includes(precinctId))
-                        .map((bs) => (
-                          <a key={`${precinctId}-${bs.id}`} href={`${process.env.PUBLIC_URL}/sample-ballots/election-dbebe1f6c8-precinct-${dashify(name)}-id-${precinctId}-style-${bs.id}-English-SAMPLE.pdf`}>sample ballot</a>
-                        ))
-                    }
-                  </SampleBallots>
-                </Precinct>
-              ))}
-            </PrecinctsList>
-          </Container>
-          <PoweredBy />
-        </React.Fragment>
-      )}
-    </div>
-  )
+                      </Contest>
+                    )
+                  }
+                )}
+              </Contests>
+            </Container>
+            <Container>
+              <Refresh>This page will automatically refresh when new results data are available.</Refresh>
+            </Container>
+            <PoweredBy />
+          </React.Fragment>
+        )}
+      </div>
+    )
+  }
 }
 
 export default App
