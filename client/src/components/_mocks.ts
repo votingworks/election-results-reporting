@@ -14,19 +14,6 @@ export const jurisdictionFile = new File(
   'jurisdictions.csv',
   { type: 'text/csv' }
 )
-// export const jurisdictionErrorFile = new File(
-//   [
-//     readFileSync(
-//       join(
-//         __dirname,
-//         '../../public/test_error_jurisdiction_filesheet.csv'
-//       ),
-//       'utf8'
-//     ),
-//   ],
-//   'jurisdictions.csv',
-//   { type: 'text/csv' }
-// )
 export const definitionFile = new File(
   [
     readFileSync(
@@ -40,19 +27,6 @@ export const definitionFile = new File(
   'definition.json',
   { type: 'application/json' }
 )
-// export const definitionErrorFile = new File(
-//   [
-//     readFileSync(
-//       join(
-//         __dirname,
-//         '../../public/test_error_definition_file.json'
-//       ),
-//       'utf8'
-//     ),
-//   ],
-//   'definition.json',
-//   { type: 'application/json' }
-// )
 
 const jurisdictionFormData: FormData = new FormData()
 jurisdictionFormData.append(
@@ -60,24 +34,80 @@ jurisdictionFormData.append(
   jurisdictionFile,
   jurisdictionFile.name
 )
-// const jurisdictionErrorFormData: FormData = new FormData()
-// jurisdictionErrorFormData.append(
-//   'jurisdictions',
-//   jurisdictionErrorFile,
-//   jurisdictionErrorFile.name
-// )
 const definitionFormData: FormData = new FormData()
 definitionFormData.append(
   'definition',
   definitionFile,
   definitionFile.name
 )
-// const definitionErrorFormData: FormData = new FormData()
-// definitionErrorFormData.append(
-//   'definition',
-//   definitionErrorFile,
-//   definitionErrorFile.name
-// )
+
+const definitionFileMockData = {
+  contests: [
+    {
+      allowWriteIns: true, 
+      candidates: [
+        {
+          id: "candidate-id-1", 
+          name: "Candidate 1"
+        }
+      ], 
+      id: "contest-id-1", 
+      name: "Contest 1"
+    },
+    {
+      allowWriteIns: true, 
+      candidates: [
+        {
+          id: "candidate-id-1", 
+          name: "Candidate 1"
+        }, 
+        {
+          id: "candidate-id-2", 
+          name: "Candidate 2"
+        }, 
+        {
+          id: "candidate-id-3", 
+          name: "Candidate 3"
+        }, 
+        {
+          id: "candidate-id-4", 
+          name: "Candidate 4"
+        }
+      ], 
+      id: "contest-id-2", 
+      name: "Contest 2"
+    }, 
+    {
+      allowWriteIns: true, 
+      candidates: [
+        {
+          id: "candidate-id-1", 
+          name: "Candidate 1"
+        }, 
+        {
+          id: "candidate-id-2", 
+          name: "Candidate 2"
+        }
+      ], 
+      id: "contest-id-3", 
+      name: "Contest 3"
+    },
+  ], 
+  precincts: [
+    {
+      id: "precinct-id-1", 
+      name: "Precinct 1"
+    }, 
+    {
+      id: "precinct-id-2", 
+      name: "Precinct 2"
+    }, 
+    {
+      id: "precinct-id-3", 
+      name: "Precinct 3"
+    }
+  ]
+}
 
 export const apiCalls = {
   serverError: (
@@ -160,8 +190,8 @@ export const jaApiCalls = {
             id: 'jurisdiction-id-1',
             name: 'Jurisdiction 1',
             election: {
-              id: "election-id-2", 
-              electionName: "Election 2", 
+              id: "election-id-1", 
+              electionName: "Election 1", 
               certificationDate: "2021-10-21", 
               pollsClose: "Tue, 12 Oct 2021 12:30:00 GMT", 
               pollsOpen: "Tue, 12 Oct 2021 04:30:00 GMT", 
@@ -187,6 +217,33 @@ export const jaApiCalls = {
       supportUser: null,
     },
   },
+  fetchWhenResultsNotUploaded: (electionId: string, jurisdictionId: string) => ({
+    url: `/api/election/${electionId}/jurisdiction/${jurisdictionId}/results`,
+    response: {
+      status: 'not-uploaded'
+    },
+  }),
+  fetchWhenResultsUploaded: (electionId: string, jurisdictionId: string) => ({
+    url: `/api/election/${electionId}/jurisdiction/${jurisdictionId}/results`,
+    response: {
+      status: 'uploaded'
+    },
+  }),
+  getDefinitionFile: (electionId: string) => ({
+    url: `/api/election/${electionId}/definition/file`,
+    response: definitionFileMockData,
+  }),
+  postElectionResultsData: (electionId: string, jurisdictionId: string, body: {}) => ({
+    url: `/api/election/${electionId}/jurisdiction/${jurisdictionId}/results`,
+    options: {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+    response: { status: 'ok' },
+  }),
 }
 
 const eaUser = {
@@ -236,7 +293,7 @@ export const eaApiCalls = {
       supportUser: null,
     },
   },
-  getUserMultipleOrgs: {
+  getUserWithMultipleOrgs: {
     url: '/api/me',
     response: {
       user: {
@@ -259,7 +316,7 @@ export const eaApiCalls = {
           },
           {
             id: 'org-id-2',
-            name: 'Org 2',
+            name: 'Organization 2',
             elections: [],
           },
         ],
@@ -269,83 +326,139 @@ export const eaApiCalls = {
   },
   postNewElection: (formData: FormData) => {
     return {
-    url: '/api/election',
-    options: {
-      method: 'POST',
-      body: formData,
-    },
-    response: { status: 'ok' },
-  }},
-  deleteElection: {
-    url: '/api/election/1',
-    options: { method: 'DELETE' },
-    response: { status: 'ok' },
-  },
-  getJurisdictions: {
-    url: '/api/election/1/jurisdiction',
-    response: {
-      jurisdictions: [
-        {
-          id: 'jurisdiction-id-1',
-          name: 'Jurisdiction One',
-        },
-        {
-          id: 'jurisdiction-id-2',
-          name: 'Jurisdiction Two',
-        },
-      ],
-    },
-  },
-  getBatchJurisdictions: {
-    url: '/api/election/1/jurisdiction',
-    response: {
-      jurisdictions: [
-        {
-          id: 'jurisdiction-id-1',
-          name: 'Jurisdiction One',
-        },
-        {
-          id: 'jurisdiction-id-2',
-          name: 'Jurisdiction Two',
-        },
-      ],
-    },
-  },
-  getDefinitionFile: {
-    url: '/api/election/1/jurisdiction/file',
-    response: {
-      file: {
-        name: 'file name',
-        uploadedAt: '2020-12-04T02:31:15.419+00:00',
+      url: '/api/election',
+      options: {
+        method: 'POST',
+        body: formData,
       },
-      processing: {
-        // status: FileProcessingStatus.Processed,
-        error: null,
-        startedAt: '2020-12-04T02:32:15.419+00:00',
-        completedAt: '2020-12-04T02:32:15.419+00:00',
-      },
-    },
+      response: { status: 'ok' },
+    }
   },
-  // putJurisdictionFile: {
-  //   url: '/api/election/1/jurisdiction/file',
-  //   options: {
-  //     method: 'PUT',
-  //     body: jurisdictionFormData,
-  //   },
-  //   response: { status: 'ok' },
-  // },
-  // putJurisdictionErrorFile: {
-  //   url: '/api/election/1/jurisdiction/file',
-  //   options: {
-  //     method: 'PUT',
-  //     body: jurisdictionErrorFormData,
-  //   },
-  //   response: { status: 'ok' },
-  // },
-  // getJurisdictionFileWithResponse: (response: IFileInfo) => ({
-  //   url: '/api/election/1/jurisdiction/file',
-  //   response,
-  // }),
+  getElectionResultsWith1Row: {
+    url: '/api/election/election-id-1/data',
+    response: {
+      data: [
+        {
+          contests: [
+            {
+              allowWriteIns: true, 
+              candidates: [
+                {
+                  id: "candidate-id-1", 
+                  name: "Candidate 1", 
+                  numVotes: 8
+                }, 
+                {
+                  id: 1, 
+                  name: "Write-in", 
+                  numVotes: 4
+                }
+              ], 
+              id: "contest-id-1", 
+              name: "Contest 1"
+            }
+          ], 
+          createdAt: "Tue, 19 Oct 2021 16:55:49 GMT", 
+          fileName: "File 1", 
+          id: "election-result-id-1", 
+          jurisdictionName: "Jurisdiction 1", 
+          source: "Data Entry", 
+          totalBallotsCast: "12"
+        },
+      ], 
+      message: "Entries Found"
+    }
+  },
+  getElectionResultsWithMultipleRows: {
+    url: '/api/election/election-id-1/data',
+    response: {
+      data: [
+        {
+          contests: [
+            {
+              allowWriteIns: true, 
+              candidates: [
+                {
+                  id: "candidate-id-1", 
+                  name: "Candidate 1", 
+                  numVotes: 4
+                }, 
+                {
+                  id: "candidate-id-2", 
+                  name: "Candidate 2", 
+                  numVotes: 3
+                }, 
+                {
+                  id: 2, 
+                  name: "Write-in", 
+                  numVotes: 1
+                }
+              ], 
+              id: "contest-id-1", 
+              name: "Contest 1"
+            }, 
+            {
+              allowWriteIns: true, 
+              candidates: [
+                {
+                  id: "candidate-id-1", 
+                  name: "Candidate 1", 
+                  numVotes: 4
+                }, 
+                {
+                  id: 1, 
+                  name: "Write-in", 
+                  numVotes: 2
+                }
+              ], 
+              id: "contest-id-2", 
+              name: "Contest 2"
+            }
+          ], 
+          createdAt: "Tue, 19 Oct 2021 16:55:49 GMT", 
+          fileName: "File 1", 
+          id: "election-result-id-1", 
+          jurisdictionName: "Jurisdiction 1", 
+          source: "Data Entry", 
+          totalBallotsCast: "14"
+        },
+        {
+          contests: [
+            {
+              allowWriteIns: true, 
+              candidates: [
+                {
+                  id: "candidate-id-1", 
+                  name: "Candidate 1", 
+                  numVotes: 8
+                }, 
+                {
+                  id: 1, 
+                  name: "Write-in", 
+                  numVotes: 4
+                }
+              ], 
+              id: "contest-id-1", 
+              name: "Contest 1"
+            }
+          ], 
+          createdAt: "Wed, 20 Oct 2021 15:41:24 GMT", 
+          fileName: "File 2", 
+          id: "election-result-id-1", 
+          jurisdictionName: "Jurisdiction 2", 
+          source: "Data Entry", 
+          totalBallotsCast: "12"
+        }
+      ], 
+      message: "Entries Found"
+    }
+  },
+  getElectionResultsWithNoRows: {
+    url: '/api/election/election-id-1/data',
+    response: {
+      message: "No entry found!"
+    }
+  },
 }
 
 export const supportApiCalls = {

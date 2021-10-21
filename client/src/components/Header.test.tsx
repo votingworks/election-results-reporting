@@ -79,7 +79,7 @@ describe('Header', () => {
       userEvent.click(userButton)
 
       // Dropdown menu should show with log out option
-      const logOutButton = screen.getByRole('link', { name: 'log-out Log out' })
+      const logOutButton = screen.getByRole('link', { name: /Log out/ })
       expect(logOutButton).toHaveAttribute('href', '/auth/logout')
 
       // There should only be 1 button after user log in
@@ -123,7 +123,7 @@ describe('Header', () => {
       userEvent.click(userButton)
 
       // Dropdown menu should show with log out option
-      const logOutButton = screen.getByRole('link', { name: 'log-out Log out' })
+      const logOutButton = screen.getByRole('link', { name: /Log out/ })
       expect(logOutButton).toHaveAttribute('href', '/auth/logout')
 
       // There should only be 1 button after user log in
@@ -151,7 +151,7 @@ describe('Header', () => {
       userEvent.click(userButton)
 
       // Dropdown menu should show with log out option
-      const logOutButton = screen.getByRole('link', { name: 'log-out Log out' })
+      const logOutButton = screen.getByRole('link', { name: /Log out/ })
       expect(logOutButton).toHaveAttribute('href', '/auth/logout')
 
       // There should only be 1 button after user log in
@@ -174,7 +174,7 @@ describe('Header', () => {
       screen.getByText('support@example.com')
 
       // Log out button
-      const logOutButton = screen.getByRole('link', { name: 'log-out Log out' })
+      const logOutButton = screen.getByRole('link', { name: /Log out/ })
       expect(logOutButton).toHaveAttribute('href', '/auth/support/logout')
 
       // No regular navbar
@@ -203,7 +203,7 @@ describe('Header', () => {
       screen.getByText('support@example.com')
 
       // Log out button
-      const logOutButton = screen.getByRole('link', { name: 'log-out Log out' })
+      const logOutButton = screen.getByRole('link', { name: /Log out/ })
       expect(logOutButton).toHaveAttribute('href', '/auth/support/logout')
 
       // Election admin navbar
@@ -219,7 +219,7 @@ describe('Header', () => {
       userEvent.click(userButton)
 
       // Dropdown menu should show with log out option
-      const aalogOutButton = screen.getAllByRole('link', { name: 'log-out Log out' })[1]
+      const aalogOutButton = screen.getAllByRole('link', { name: /Log out/ })[1]
       expect(aalogOutButton).toHaveAttribute('href', '/auth/logout')
     })
   })
@@ -241,7 +241,7 @@ describe('Header', () => {
       screen.getByText('support@example.com')
 
       // Log out button
-      const logOutButton = screen.getByRole('link', { name: 'log-out Log out' })
+      const logOutButton = screen.getByRole('link', { name: /Log out/ })
       expect(logOutButton).toHaveAttribute('href', '/auth/support/logout')
 
       // Jurisdiction admin navbar
@@ -257,7 +257,7 @@ describe('Header', () => {
       userEvent.click(userButton)
 
       // Dropdown menu should show with log out option
-      const jalogOutButton = screen.getAllByRole('link', { name: 'log-out Log out' })[1]
+      const jalogOutButton = screen.getAllByRole('link', { name: /Log out/ })[1]
       expect(jalogOutButton).toHaveAttribute('href', '/auth/logout')
     })
   })
