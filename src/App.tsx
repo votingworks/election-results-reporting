@@ -59,6 +59,8 @@ const SealImg = styled.img`
     position: absolute;
     top: 0;
     left: 0;
+    width: 120px;
+    height: 120px;
   }
 `
 const NavHeader = styled.div`
