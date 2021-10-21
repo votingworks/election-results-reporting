@@ -450,11 +450,11 @@ const App: React.FC = () => {
             return
           }
           const { ballots, undervotes, overvotes } = contestTally.metadata
-          const writeIn = {
+          const writeIn: CandidateInterface = {
             id: '__write-in',
             name: 'write-in',
             partyId: ''
-          } as CandidateInterface
+          }
           const candidates = allowWriteIns ?
            [
              ...contestCandidates,
