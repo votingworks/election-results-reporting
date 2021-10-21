@@ -348,7 +348,6 @@ const App: React.FC = () => {
 
   const [ election, setElection ] = useState<Election | undefined>(undefined)
   const [ tallies, setTallies ] = useState<ServerResult[] | undefined>(undefined)
-  const [ refreshCountdown, setRefreshCountdown ] = useState(0)
 
   const hasResults = !!tallies?.length
   const [ currentPage, setCurrentPage ] = useState('results')
@@ -367,9 +366,7 @@ const App: React.FC = () => {
     const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/tallies/${process.env.REACT_APP_IS_LIVE === '1' ? 1 : 0}`)
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: ServerResult[] = await response.json()
-      if (Object.keys(jsonResponse).length !== 0) {
-        setTallies(jsonResponse)
-      }
+      setTallies(jsonResponse)
     } else {
       console.log(response.status, response.statusText);
     }
@@ -391,10 +388,7 @@ const App: React.FC = () => {
   // Refresh Results
   useEffect(() => {
     const timer = setTimeout(() => {
-      setRefreshCountdown((t) => t === 0 ? refreshInterval : t - 1)
-      if (refreshCountdown === 0) {
-        fetchTallies()
-      }
+      fetchTallies()
     }, refreshInterval * 1000);
     return () => clearTimeout(timer)
   })
@@ -402,7 +396,7 @@ const App: React.FC = () => {
   const lastUpdatedDate = (tallies?.map((machine) => machine.seconds_since_epoch)[0] || 0) * 1000
 
   const summedTallies = sumCompressedTallies(tallies?.map((t) => t.tally) || [])
-  const contestResults = election && tallies && getContestTallies(summedTallies, election)
+  const contestResults = election && !!tallies?.length && getContestTallies(summedTallies, election)
 
   const summedTalliesByPrecinct = tallies?.reduce<Dictionary<CompressedTally>>((tallies, machine) => {
     if (tallies[machine.precinct_id]) {
@@ -444,7 +438,7 @@ const App: React.FC = () => {
   const ContestsList = ({ contestResults, election } : {contestResults: Dictionary<ContestTally>, election: Election}) => (
     <Contests>
       {electionCandidateContests?.map(
-        ({ section, title, seats, candidates: contestCandidates, id: contestId, allowWriteIns }) => {
+        ({ section, title, seats, candidates, id: contestId, allowWriteIns }) => {
           const contestTally = contestResults[contestId]
           if (!contestTally) {
             return
@@ -455,12 +449,12 @@ const App: React.FC = () => {
             name: 'write-in',
             partyId: ''
           }
-          const candidates = allowWriteIns ?
+          const displayCandidates = allowWriteIns ?
            [
-             ...contestCandidates,
+             ...candidates,
              writeIn,
            ] :
-           contestCandidates
+           candidates as CandidateInterface[] // explicitly converting from readonly to mutable
           return (
             <Contest key={contestId}>
               <Row>
@@ -477,7 +471,7 @@ const App: React.FC = () => {
                 )}
               </Row>
               <div>
-                {candidates
+                {displayCandidates
                   .sort((a, b) =>{
                     const t = contestResults[contestId]
                     assert(t)
@@ -544,7 +538,7 @@ const App: React.FC = () => {
       </Main>
     )
   } else {
-    if (!contestResults) {
+    if (tallies === undefined) {
       return (
         <Main>
           <MainChild>
@@ -594,6 +588,9 @@ const App: React.FC = () => {
                     Results do not contain absentee ballot counts.
                   </LastUpdated>
                 )}
+                {!contestResults && (
+                  <p>No results yet reported.</p>
+                )}
                 <ElectionTitle>{election.title}</ElectionTitle>
                 <ElectionDate>
                   <NoWrap>{localeWeekdayAndDate.format(new Date(election.date))}</NoWrap>
@@ -601,7 +598,9 @@ const App: React.FC = () => {
               </PageHeader>
             </Container>
             <Container>
-              <ContestsList contestResults={contestResults} election={election} />
+              {!!contestResults && (
+                <ContestsList contestResults={contestResults} election={election} />
+              )}
             </Container>
             <Container>
               <Refresh>This page will automatically refresh when new results data are available.</Refresh>
