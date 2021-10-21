@@ -444,7 +444,7 @@ const App: React.FC = () => {
   const ContestsList = ({ contestResults, election } : {contestResults: Dictionary<ContestTally>, election: Election}) => (
     <Contests>
       {electionCandidateContests?.map(
-        ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
+        ({ section, title, seats, candidates: contestCandidates, id: contestId, allowWriteIns }) => {
           const contestTally = contestResults[contestId]
           if (!contestTally) {
             return
@@ -455,10 +455,12 @@ const App: React.FC = () => {
             name: 'write-in',
             partyId: ''
           } as CandidateInterface
-          const candidates = [
-            ...contestCandidates,
-            writeIn,
-          ]
+          const candidates = allowWriteIns ?
+			     [
+			       ...contestCandidates,
+			       writeIn,
+			     ] :
+			     contestCandidates
           return (
             <Contest key={contestId}>
               <Row>
