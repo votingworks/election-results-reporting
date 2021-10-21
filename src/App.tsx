@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import styled from 'styled-components'
 import pluralize from 'pluralize'
@@ -170,13 +170,13 @@ const Actions = styled.div`
   }
 `
 
-const Button = styled.button`
+const Button = styled.button<{ primary: boolean }>`
   display: inline-block;
   padding: 0.5em 1em;
   border: none;
-  background: #003334;
+  background: ${({ primary }) => primary ? '#ffc55d' : '#003334'};
   border-radius: 0.25em;
-  color: #ffffff;
+  color: ${({ primary }) => primary ? '#003334' : '#ffffff'};
   cursor: pointer;
   line-height: 1.25;
   text-decoration: none;
@@ -319,7 +319,6 @@ const VotingWorksWordmark = styled.span`
   text-indent: 100%;
   vertical-align: middle;
 `
-
 const formatPercentage = (a: number, b: number): string =>
   {
     if (a === 0) {
@@ -375,11 +374,27 @@ const newResultsTimeout = 5
 const App: React.FC = () => {
   const electionHash = process.env.REACT_APP_ELECTION_HASH
 
+  const deskBell = useRef<HTMLAudioElement>(null)
   const [ election, setElection ] = useState<Election | undefined>(undefined)
   const [ tallies, setTallies ] = useState<ServerResult[] | undefined>(undefined)
   const hasResults = !!tallies?.length
   const [ currentPage, setCurrentPage ] = useState('results')
   const [ newResults, setNewResults ] = useState(false)
+  const [ isAudioNotification, setIsAudioNotification ] = useState(false)
+  const toggleIsAudioNotification = () => {
+    setIsAudioNotification((on) => {
+      const bell = deskBell.current
+      if (bell) {
+        if (on) {
+          bell.pause()
+          bell.currentTime = 0
+        } else {
+          bell.play()
+        }
+      }
+      return !on
+    })
+  }
 
   const fetchElection = async () => {
     const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/definition`)
@@ -398,6 +413,7 @@ const App: React.FC = () => {
       const jsonResponse: ServerResult[] = await response.json()
       if (talliesString !== JSON.stringify(jsonResponse)) {
         if (talliesString !== undefined && jsonResponse.length > 0) {
+          isAudioNotification && deskBell.current && deskBell.current.play()
           setNewResults(true)
         }
         setTallies(jsonResponse)
@@ -405,7 +421,7 @@ const App: React.FC = () => {
     } else {
       console.log(response.status, response.statusText);
     }
-}, [tallies])
+}, [tallies, isAudioNotification])
 
   // Init Results
   useEffect(() => {
@@ -475,6 +491,26 @@ const App: React.FC = () => {
     <Container>
       <PoweredByVotingWorks as="a" href="https://voting.works/">Powered by <VotingWorksWordmark>VotingWorks</VotingWorksWordmark></PoweredByVotingWorks>
     </Container>
+  )
+
+  const PageFooter = () => (
+    <React.Fragment>
+      <Container>
+        <Refresh> This page will automatically refresh when new results data are available.</Refresh>
+        <Refresh>
+          <Button
+            primary={isAudioNotification}
+            onClick={toggleIsAudioNotification}>
+            {
+              isAudioNotification
+                ? "Disable Audio Notification of New Results"
+                : "Enable Audio Notification of New Results"
+            }
+          </Button>
+        </Refresh>
+      </Container>
+      <PoweredBy />
+    </React.Fragment>
   )
 
   const ContestsList = ({ contestResults, election } : {contestResults: Dictionary<ContestTally>, election: Election}) => (
@@ -645,10 +681,7 @@ const App: React.FC = () => {
                 <ContestsList contestResults={contestResults} election={election} />
               )}
             </Container>
-            <Container>
-              <Refresh>This page will automatically refresh when new results data are available.</Refresh>
-            </Container>
-            <PoweredBy />
+            <PageFooter />
           </React.Fragment>
         )}
         {currentPage === 'precincts' && (
@@ -681,12 +714,10 @@ const App: React.FC = () => {
                 </div>
               ))}
             </Container>
-            <Container>
-              <Refresh>This page will automatically refresh when new results data are available.</Refresh>
-            </Container>
-            <PoweredBy />
+            <PageFooter />
           </React.Fragment>
         )}
+        <audio controls src="/sounds/desk-bell.mp3" ref={deskBell} style={{ display: "none" }} />
       </React.Fragment>
     )
   }
