@@ -456,11 +456,11 @@ const App: React.FC = () => {
             partyId: ''
           } as CandidateInterface
           const candidates = allowWriteIns ?
-			     [
-			       ...contestCandidates,
-			       writeIn,
-			     ] :
-			     contestCandidates
+           [
+             ...contestCandidates,
+             writeIn,
+           ] :
+           contestCandidates
           return (
             <Contest key={contestId}>
               <Row>
