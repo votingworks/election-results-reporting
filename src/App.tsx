@@ -3,7 +3,15 @@ import './App.css'
 import styled from 'styled-components'
 import pluralize from 'pluralize'
 
-import { Candidate as CandidateInterface, CandidateContest, CompressedTally, ContestTally, Dictionary, Election } from '@votingworks/types'
+import {
+  AnyContest,
+  Candidate as CandidateInterface,
+  CandidateContest,
+  CompressedTally,
+  ContestTally,
+  Dictionary,
+  Election
+} from '@votingworks/types'
 import { readCompressedTally } from '@votingworks/utils'
 import { ServerResult } from './config/types'
 import {
@@ -313,6 +321,27 @@ const getContestTallies = (tally: CompressedTally, election: Election) =>
 
 const getPartyName = (election: Election, partyId: string) => election?.parties.find((p) => p.id === partyId)?.name
 
+// copied from `election-manager/src/utils/election`
+const getContestsForPrecinct = (
+  election: Election,
+  precinctId: string
+): AnyContest[] => {
+  const precinct = election.precincts.find((p) => p.id === precinctId)
+  if (precinct === undefined) {
+    return []
+  }
+  const precinctBallotStyles = election.ballotStyles.filter((bs) =>
+    bs.precincts.includes(precinct.id)
+  )
+
+  return election.contests.filter((c) => {
+    const districts = precinctBallotStyles
+      .filter((bs) => bs.partyId === c.partyId)
+      .flatMap((bs) => bs.districts)
+    return districts.includes(c.districtId)
+  })
+}
+
 const refreshInterval = 60
 const App: React.FC = () => {
   const electionHash = process.env.REACT_APP_ELECTION_HASH
@@ -376,21 +405,27 @@ const App: React.FC = () => {
   const contestResults = election && tallies && getContestTallies(summedTallies, election)
 
   const summedTalliesByPrecinct = tallies?.reduce<Dictionary<CompressedTally>>((tallies, machine) => {
-    const newTallies = {...tallies}
-    if (newTallies[machine.precinct_id]) {
-      newTallies[machine.precinct_id] = sumCompressedTallies([
-        newTallies[machine.precinct_id]!,
+    if (tallies[machine.precinct_id]) {
+      tallies[machine.precinct_id] = sumCompressedTallies([
+        tallies[machine.precinct_id]!,
         machine.tally
       ])
     } else {
-      newTallies[machine.precinct_id] = machine.tally
+      tallies[machine.precinct_id] = machine.tally
     }
-    return newTallies
+    return tallies
   },{})
-  const contestResultsByPrecinct = !election ? [] : election.precincts.map((precinct) => ({
-    ...precinct,
-    contestResults: !!summedTalliesByPrecinct && summedTalliesByPrecinct[precinct.id] && getContestTallies(summedTalliesByPrecinct[precinct.id]!, election),
-  }))
+  const contestResultsByPrecinct = (!election || !summedTalliesByPrecinct) ? [] : election.precincts.map((precinct) => {
+    const precinctContestResults = summedTalliesByPrecinct[precinct.id] && getContestTallies(summedTalliesByPrecinct[precinct.id]!, election)
+    const contestResults = precinctContestResults ? getContestsForPrecinct(election, precinct.id).reduce<Dictionary<ContestTally>>((contestResults, contest) => {
+      contestResults[contest.id] = precinctContestResults[contest.id]
+      return contestResults
+    }, {}) : undefined
+    return {
+      ...precinct,
+      contestResults,
+    }
+  })
   const precinctsReportingCount = contestResultsByPrecinct.filter((p) => !!p.contestResults).length
   const ReportingStatus = () => <React.Fragment>Results reported from {precinctsReportingCount} of {pluralize('precinct', contestResultsByPrecinct.length, true)}.</React.Fragment>
 
@@ -411,7 +446,9 @@ const App: React.FC = () => {
       {electionCandidateContests?.map(
         ({ section, title, seats, candidates: contestCandidates, id: contestId }) => {
           const contestTally = contestResults[contestId]
-          assert(contestTally)
+          if (!contestTally) {
+            return
+          }
           const { ballots, undervotes, overvotes } = contestTally.metadata
           const writeIn = {
             id: '__write-in',
