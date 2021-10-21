@@ -47,8 +47,7 @@ button {
   outline: none;
 }
 
-/* Foundational */
-body {
+/* Typography */body {
   margin: 0;
   font-size: 16px;
   font-family: Roboto, 'Helvetica Neue', Helvetica, sans-serif;

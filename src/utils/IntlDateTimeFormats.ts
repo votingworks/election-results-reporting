@@ -17,3 +17,9 @@ export const localeWeekdayAndDate = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
   day: 'numeric',
   year: 'numeric',
 })
+
+export const localeDate = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+})
