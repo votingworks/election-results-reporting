@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import styled from 'styled-components'
 import pluralize from 'pluralize'
@@ -61,6 +61,32 @@ const SealImg = styled.img`
     left: 0;
     width: 120px;
     height: 120px;
+  }
+`
+const NewResultsMessage = styled.div<{ showMessage: boolean }>`
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 70px;
+  height: 70px;
+  padding: 0.5rem;
+  background-color: #ffc55d;
+  border-radius: 100%;
+  font-size: 0.9em;
+  font-weight: 700;
+  opacity: ${({ showMessage }) => showMessage ? '100%' : '0%'};
+  text-align: center;
+  transform: rotate(-14deg);
+  transition: opacity linear ${({ showMessage }) => showMessage ? '0.75s' : '2s'};
+  @media (min-width: 568px) {
+    width: 120px;
+    height: 120px;
+    font-size: 1.4em;
+  }
+  & > span {
+    margin: auto;
   }
 `
 const NavHeader = styled.div`
@@ -345,14 +371,15 @@ const getContestsForPrecinct = (
 }
 
 const refreshInterval = 60
+const newResultsTimeout = 5
 const App: React.FC = () => {
   const electionHash = process.env.REACT_APP_ELECTION_HASH
 
   const [ election, setElection ] = useState<Election | undefined>(undefined)
   const [ tallies, setTallies ] = useState<ServerResult[] | undefined>(undefined)
-
   const hasResults = !!tallies?.length
   const [ currentPage, setCurrentPage ] = useState('results')
+  const [ newResults, setNewResults ] = useState(false)
 
   const fetchElection = async () => {
     const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/definition`)
@@ -364,15 +391,21 @@ const App: React.FC = () => {
     }
   }
 
-  const fetchTallies = async () => {
+  const fetchTallies = useCallback(async () => {
+    const talliesString = JSON.stringify(tallies)
     const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/tallies/${process.env.REACT_APP_IS_LIVE === '1' ? 1 : 0}`)
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: ServerResult[] = await response.json()
-      setTallies(jsonResponse)
+      if (talliesString !== JSON.stringify(jsonResponse)) {
+        if (talliesString !== undefined && jsonResponse.length > 0) {
+          setNewResults(true)
+        }
+        setTallies(jsonResponse)
+      }
     } else {
       console.log(response.status, response.statusText);
     }
-  }
+}, [tallies])
 
   // Init Results
   useEffect(() => {
@@ -385,15 +418,22 @@ const App: React.FC = () => {
       const documentTitle = `Election Results - ${localeDate.format(new Date(election.date))} ${election.title}, ${election.county.name}, ${election.state}`
       document.title = documentTitle
     }
-  }, [election])
+  }, [election, fetchTallies])
 
   // Refresh Results
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setInterval(() => {
       fetchTallies()
     }, refreshInterval * 1000);
+    return () => clearInterval(timer)
+  }, [fetchTallies])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setNewResults(false)
+    }, newResultsTimeout * 1000)
     return () => clearTimeout(timer)
-  })
+  }, [newResults, setNewResults])
 
   const lastUpdatedDate = (tallies?.map((machine) => machine.seconds_since_epoch)[0] || 0) * 1000
 
@@ -559,6 +599,7 @@ const App: React.FC = () => {
                   src={election.sealURL}
                   alt="seal"
                 />
+                <NewResultsMessage showMessage={newResults}><span>New Results!</span></NewResultsMessage>
               </Brand>
               <NavigationContent>
                 <NavHeader>{election.county.name}, {election.state}</NavHeader>
