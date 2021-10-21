@@ -325,7 +325,7 @@ const App: React.FC = () => {
   const [ currentPage, setCurrentPage ] = useState('results')
 
   const fetchElection = async () => {
-    const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH)}/definition`)
+    const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/definition`)
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: Election = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
@@ -335,7 +335,7 @@ const App: React.FC = () => {
   }
 
   const fetchTallies = async () => {
-    const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH)}/tallies/${process.env.REACT_APP_IS_LIVE === '1' ? 1 : 0}`)
+    const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/tallies/${process.env.REACT_APP_IS_LIVE === '1' ? 1 : 0}`)
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: ServerResult[] = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
