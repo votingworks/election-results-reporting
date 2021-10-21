@@ -481,12 +481,6 @@ const App: React.FC = () => {
   const precinctsReportingCount = contestResultsByPrecinct.filter((p) => !!p.contestResults).length
   const ReportingStatus = () => <React.Fragment>Results reported from {precinctsReportingCount} of {pluralize('precinct', contestResultsByPrecinct.length, true)}.</React.Fragment>
 
-  const electionCandidateContests = election?.contests.map((contest) => {
-    if (contest.type === "candidate") {
-      return contest
-    }
-  }) as CandidateContest[] | undefined
-
   const PoweredBy = () => (
     <Container>
       <PoweredByVotingWorks as="a" href="https://voting.works/">Powered by <VotingWorksWordmark>VotingWorks</VotingWorksWordmark></PoweredByVotingWorks>
@@ -513,89 +507,88 @@ const App: React.FC = () => {
     </React.Fragment>
   )
 
-  const ContestsList = ({ contestResults, election } : {contestResults: Dictionary<ContestTally>, election: Election}) => (
-    <Contests>
-      {electionCandidateContests?.map(
-        ({ section, title, seats, candidates, id: contestId, allowWriteIns }) => {
-          const contestTally = contestResults[contestId]
-          if (!contestTally) {
-            return
-          }
-          const { ballots, undervotes, overvotes } = contestTally.metadata
-          const writeIn: CandidateInterface = {
-            id: '__write-in',
-            name: 'write-in',
-            partyId: ''
-          }
-          const displayCandidates = allowWriteIns ?
-           [
-             ...candidates,
-             writeIn,
-           ] :
-           candidates as CandidateInterface[] // explicitly converting from readonly to mutable
-          return (
-            <Contest key={contestId}>
-              <Row>
+  const ContestsList = ({ contestResults, election } : {contestResults: Dictionary<ContestTally>, election: Election}) => {
+    const electionCandidateContests = election?.contests.map((contest) => contest.type === "candidate" && contest) as CandidateContest[]
+    return(
+      <Contests>
+        {electionCandidateContests?.map(
+          ({ section, title, seats, candidates, id: contestId, allowWriteIns }) => {
+            const contestTally = contestResults[contestId]
+            if (!contestTally) {
+              return
+            }
+            const { ballots, undervotes, overvotes } = contestTally.metadata
+            const writeIn: CandidateInterface = {
+              id: '__write-in',
+              name: 'write-in',
+              partyId: ''
+            }
+            const displayCandidates = [...candidates] as CandidateInterface[] // explicitly converting from readonly to mutable
+            allowWriteIns && displayCandidates.push(writeIn)
+            return (
+              <Contest key={contestId}>
+                <Row>
+                  <div>
+                    <ContestSection>{section}</ContestSection>
+                    <ContestTitle>{title}</ContestTitle>
+                  </div>
+                  {seats > 1 && (
+                    <CandidateDataColumn>
+                      <CandidateDetail>
+                        {seats} seat
+                      </CandidateDetail>
+                    </CandidateDataColumn>
+                  )}
+                </Row>
                 <div>
-                  <ContestSection>{section}</ContestSection>
-                  <ContestTitle>{title}</ContestTitle>
+                  {[...displayCandidates]
+                    .sort((a, b) =>{
+                      const t = contestResults[contestId]
+                      assert(t)
+                      const ta = t.tallies[a.id]
+                      const tb = t.tallies[b.id]
+                      assert(ta)
+                      assert(tb)
+                      return tb.tally - ta.tally
+                    })
+                    .map(({ id: candidateId, name, partyId }) => {
+                      const candidate = contestTally.tallies[candidateId]
+                      assert(candidate)
+                      const candidateVotes = candidate.tally
+                      return (
+                        <Candidate key={candidateId}>
+                          <CandidateProgressBar>
+                            <div style={{ width: formatPercentage(candidateVotes, ballots) }} />
+                          </CandidateProgressBar>
+                          <CandidateRow data-percentage="50%">
+                            <CandidateDataColumn>
+                              <CandidateMain as="h3">{name}</CandidateMain>
+                              {!!partyId && <CandidateDetail>{getPartyName(election, partyId)}</CandidateDetail>}
+                            </CandidateDataColumn>
+                            <CandidateDataColumn>
+                              <CandidateMain>
+                                {formatPercentage(candidateVotes, ballots)}
+                              </CandidateMain>
+                              <CandidateDetail>{pluralize('vote', candidateVotes, true)}</CandidateDetail>
+                            </CandidateDataColumn>
+                          </CandidateRow>
+                        </Candidate>
+                      )
+                    })
+                  }
+                  <ContestMeta>
+                    <NoWrap>{pluralize('ballots', ballots, true)}</NoWrap> /{' '}
+                    <NoWrap>{pluralize('undervotes', undervotes, true)}</NoWrap> /{' '}
+                    <NoWrap>{pluralize('overvotes', overvotes, true)}</NoWrap>
+                  </ContestMeta>
                 </div>
-                {seats > 1 && (
-                  <CandidateDataColumn>
-                    <CandidateDetail>
-                      {seats} seat
-                    </CandidateDetail>
-                  </CandidateDataColumn>
-                )}
-              </Row>
-              <div>
-                {displayCandidates
-                  .sort((a, b) =>{
-                    const t = contestResults[contestId]
-                    assert(t)
-                    const ta = t.tallies[a.id]
-                    const tb = t.tallies[b.id]
-                    assert(ta)
-                    assert(tb)
-                    return tb.tally - ta.tally
-                  })
-                  .map(({ id: candidateId, name, partyId }) => {
-                    const candidate = contestTally.tallies[candidateId]
-                    assert(candidate)
-                    const candidateVotes = candidate.tally
-                    return (
-                      <Candidate key={candidateId}>
-                        <CandidateProgressBar>
-                          <div style={{ width: formatPercentage(candidateVotes, ballots) }} />
-                        </CandidateProgressBar>
-                        <CandidateRow data-percentage="50%">
-                          <CandidateDataColumn>
-                            <CandidateMain as="h3">{name}</CandidateMain>
-                            {!!partyId && <CandidateDetail>{getPartyName(election, partyId)}</CandidateDetail>}
-                          </CandidateDataColumn>
-                          <CandidateDataColumn>
-                            <CandidateMain>
-                              {formatPercentage(candidateVotes, ballots)}
-                            </CandidateMain>
-                            <CandidateDetail>{pluralize('vote', candidateVotes, true)}</CandidateDetail>
-                          </CandidateDataColumn>
-                        </CandidateRow>
-                      </Candidate>
-                    )
-                  })
-                }
-                <ContestMeta>
-                  <NoWrap>{pluralize('ballots', ballots, true)}</NoWrap> /{' '}
-                  <NoWrap>{pluralize('undervotes', undervotes, true)}</NoWrap> /{' '}
-                  <NoWrap>{pluralize('overvotes', overvotes, true)}</NoWrap>
-                </ContestMeta>
-              </div>
-            </Contest>
-          )
-        }
-      )}
-    </Contests>
-  )
+              </Contest>
+            )
+          }
+        )}
+      </Contests>
+    )
+  }
 
   if (!electionHash) {
     return(
