@@ -650,7 +650,9 @@ const App: React.FC = () => {
                   </Actions>
                 )}
                 <Headline>
-                  Unofficial Results
+                  Unofficial Results{process.env.REACT_APP_IS_LIVE !== '1' && (
+		      <span> &mdash; Test Ballots</span>
+		  )}
                 </Headline>
                 {!!lastUpdatedDate && (
                   <LastUpdated>
