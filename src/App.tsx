@@ -10,7 +10,7 @@ import {
   CompressedTally,
   ContestTally,
   Dictionary,
-  Election
+  Election,
 } from '@votingworks/types'
 import { readCompressedTally } from '@votingworks/utils'
 import { ServerResult } from './config/types'
@@ -47,7 +47,7 @@ const Brand = styled.div`
     padding: 1rem;
     margin: 0.5rem 1rem;
   }
-  @media print, (min-width: ${1200 + (2 * 16)}px) {
+  @media print, (min-width: ${1200 + 2 * 16}px) {
     margin-left: 0;
   }
 `
@@ -76,10 +76,11 @@ const NewResultsMessage = styled.div<{ showMessage: boolean }>`
   border-radius: 100%;
   font-size: 0.9em;
   font-weight: 700;
-  opacity: ${({ showMessage }) => showMessage ? '100%' : '0%'};
+  opacity: ${({ showMessage }) => (showMessage ? '100%' : '0%')};
   text-align: center;
   transform: rotate(-14deg);
-  transition: opacity linear ${({ showMessage }) => showMessage ? '0.75s' : '2s'};
+  transition: opacity linear
+    ${({ showMessage }) => (showMessage ? '0.75s' : '2s')};
   @media (min-width: 568px) {
     width: 120px;
     height: 120px;
@@ -120,9 +121,9 @@ const NavTabs = styled.div`
 const NavTab = styled.button<{ active?: boolean }>`
   padding: 0.5rem 1rem;
   margin-right: 0.5rem;
-  background: ${({ active }) => active ? '#eeeeee' : '#003334'};
+  background: ${({ active }) => (active ? '#eeeeee' : '#003334')};
   border-radius: 0.3rem 0.3rem 0 0;
-  color: ${({ active }) => active ? '#000000' : '#ffffff'};
+  color: ${({ active }) => (active ? '#000000' : '#ffffff')};
   font-size: 1.15rem;
   text-decoration: none;
 `
@@ -145,7 +146,7 @@ const PageHeader = styled.div`
   @media (min-width: 568px) {
     padding: 1.25rem 1rem 1rem;
   }
-  @media print, (min-width: ${1200 + (2 * 16)}px) {
+  @media print, (min-width: ${1200 + 2 * 16}px) {
     padding-right: 0;
     padding-left: 0;
   }
@@ -174,9 +175,9 @@ const Button = styled.button<{ primary: boolean }>`
   display: inline-block;
   padding: 0.5em 1em;
   border: none;
-  background: ${({ primary }) => primary ? '#ffc55d' : '#003334'};
+  background: ${({ primary }) => (primary ? '#ffc55d' : '#003334')};
   border-radius: 0.25em;
-  color: ${({ primary }) => primary ? '#003334' : '#ffffff'};
+  color: ${({ primary }) => (primary ? '#003334' : '#ffffff')};
   cursor: pointer;
   line-height: 1.25;
   text-decoration: none;
@@ -199,7 +200,7 @@ const Contests = styled.div`
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
   }
-  @media (min-width: ${1200 + (2 * 16)}px) {
+  @media (min-width: ${1200 + 2 * 16}px) {
     margin-right: 0;
     margin-left: 0;
   }
@@ -291,7 +292,7 @@ const Refresh = styled.p`
   @media (min-width: 568px) {
     padding: 1.25rem 1rem 1rem;
   }
-  @media (min-width: ${1200 + (2 * 16)}px) {
+  @media (min-width: ${1200 + 2 * 16}px) {
     padding-right: 0;
     padding-left: 0;
   }
@@ -315,38 +316,42 @@ const VotingWorksWordmark = styled.span`
   width: 170px;
   height: 40px;
   margin-left: 0.5rem;
-  background: bottom center url('${process.env.PUBLIC_URL}/votingworks-wordmark-purple.svg') no-repeat;
+  background: bottom center
+    url('${process.env.PUBLIC_URL}/votingworks-wordmark-purple.svg') no-repeat;
   text-indent: 100%;
   vertical-align: middle;
 `
-const formatPercentage = (a: number, b: number): string =>
-  {
-    if (a === 0) {
-      return '0%'
-    }
-    if (a === b) {
-      return '100%'
-    }
-    const quotient = b === 0 ? 0 : a / b
-    return `${(Math.round(quotient * 10000) / 100).toFixed(2)}%`
+const formatPercentage = (a: number, b: number): string => {
+  if (a === 0) {
+    return '0%'
   }
+  if (a === b) {
+    return '100%'
+  }
+  const quotient = b === 0 ? 0 : a / b
+  return `${(Math.round(quotient * 10000) / 100).toFixed(2)}%`
+}
 
-const sumCompressedTallies = (compressedTallies: CompressedTally[]): CompressedTally =>
+const sumCompressedTallies = (
+  compressedTallies: CompressedTally[]
+): CompressedTally =>
   compressedTallies.reduce(
-    (sum, tally) => sum.length === 0
-      ? tally
-      : sum.map(
-        (contest, contestIndex) => contest.map(
-          (option, tallyIndex) => option + tally[contestIndex][tallyIndex]
-        )
-      ),
+    (sum, tally) =>
+      sum.length === 0
+        ? tally
+        : sum.map((contest, contestIndex) =>
+            contest.map(
+              (option, tallyIndex) => option + tally[contestIndex][tallyIndex]
+            )
+          ),
     []
   )
 
 const getContestTallies = (tally: CompressedTally, election: Election) =>
   readCompressedTally(election, tally, 0, { foo: 0 }).contestTallies
 
-const getPartyName = (election: Election, partyId: string) => election?.parties.find((p) => p.id === partyId)?.name
+const getPartyName = (election: Election, partyId: string) =>
+  election?.parties.find((p) => p.id === partyId)?.name
 
 // copied from `election-manager/src/utils/election`
 const getContestsForPrecinct = (
@@ -375,12 +380,12 @@ const App: React.FC = () => {
   const electionHash = process.env.REACT_APP_ELECTION_HASH
 
   const deskBell = useRef<HTMLAudioElement>(null)
-  const [ election, setElection ] = useState<Election | undefined>(undefined)
-  const [ tallies, setTallies ] = useState<ServerResult[] | undefined>(undefined)
+  const [election, setElection] = useState<Election | undefined>(undefined)
+  const [tallies, setTallies] = useState<ServerResult[] | undefined>(undefined)
   const hasResults = !!tallies?.length
-  const [ currentPage, setCurrentPage ] = useState('results')
-  const [ newResults, setNewResults ] = useState(false)
-  const [ isAudioNotification, setIsAudioNotification ] = useState(false)
+  const [currentPage, setCurrentPage] = useState('results')
+  const [newResults, setNewResults] = useState(false)
+  const [isAudioNotification, setIsAudioNotification] = useState(false)
   const toggleIsAudioNotification = () => {
     setIsAudioNotification((on) => {
       const bell = deskBell.current
@@ -397,7 +402,11 @@ const App: React.FC = () => {
   }
 
   const fetchElection = async () => {
-    const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/definition`)
+    const response = await fetch(
+      `https://results.voting.works/election/${encodeURIComponent(
+        process.env.REACT_APP_ELECTION_HASH!
+      )}/definition`
+    )
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: Election = await response.json()
       if (Object.keys(jsonResponse).length !== 0) {
@@ -408,7 +417,11 @@ const App: React.FC = () => {
 
   const fetchTallies = useCallback(async () => {
     const talliesString = JSON.stringify(tallies)
-    const response = await fetch(`https://results.voting.works/election/${encodeURIComponent(process.env.REACT_APP_ELECTION_HASH!)}/tallies/${process.env.REACT_APP_IS_LIVE === '1' ? 1 : 0}`)
+    const response = await fetch(
+      `https://results.voting.works/election/${encodeURIComponent(
+        process.env.REACT_APP_ELECTION_HASH!
+      )}/tallies/${process.env.REACT_APP_IS_LIVE === '1' ? 1 : 0}`
+    )
     if (response.status >= 200 && response.status <= 299) {
       const jsonResponse: ServerResult[] = await response.json()
       if (talliesString !== JSON.stringify(jsonResponse)) {
@@ -419,9 +432,9 @@ const App: React.FC = () => {
         setTallies(jsonResponse)
       }
     } else {
-      console.log(response.status, response.statusText);
+      console.log(response.status, response.statusText)
     }
-}, [tallies, isAudioNotification])
+  }, [tallies, isAudioNotification])
 
   // Init Results
   useEffect(() => {
@@ -431,7 +444,9 @@ const App: React.FC = () => {
   useEffect(() => {
     if (election) {
       fetchTallies()
-      const documentTitle = `Election Results - ${localeDate.format(new Date(election.date))} ${election.title}, ${election.county.name}, ${election.state}`
+      const documentTitle = `Election Results - ${localeDate.format(
+        new Date(election.date)
+      )} ${election.title}, ${election.county.name}, ${election.state}`
       document.title = documentTitle
     }
   }, [election, fetchTallies])
@@ -440,7 +455,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       fetchTallies()
-    }, refreshInterval * 1000);
+    }, refreshInterval * 1000)
     return () => clearInterval(timer)
   }, [fetchTallies])
 
@@ -451,55 +466,81 @@ const App: React.FC = () => {
     return () => clearTimeout(timer)
   }, [newResults, setNewResults])
 
-  const lastUpdatedDate = (tallies?.map((machine) => machine.seconds_since_epoch)[0] || 0) * 1000
+  const lastUpdatedDate =
+    (tallies?.map((machine) => machine.seconds_since_epoch)[0] || 0) * 1000
 
   const summedTallies = sumCompressedTallies(tallies?.map((t) => t.tally) || [])
-  const contestResults = election && !!tallies?.length && getContestTallies(summedTallies, election)
+  const contestResults =
+    election && !!tallies?.length && getContestTallies(summedTallies, election)
 
-  const summedTalliesByPrecinct = tallies?.reduce<Dictionary<CompressedTally>>((tallies, machine) => {
-    if (tallies[machine.precinct_id]) {
-      tallies[machine.precinct_id] = sumCompressedTallies([
-        tallies[machine.precinct_id]!,
-        machine.tally
-      ])
-    } else {
-      tallies[machine.precinct_id] = machine.tally
-    }
-    return tallies
-  },{})
-  const contestResultsByPrecinct = (!election || !summedTalliesByPrecinct) ? [] : election.precincts.map((precinct) => {
-    const precinctContestResults = summedTalliesByPrecinct[precinct.id] && getContestTallies(summedTalliesByPrecinct[precinct.id]!, election)
-    const contestResults = precinctContestResults ? getContestsForPrecinct(election, precinct.id).reduce<Dictionary<ContestTally>>((contestResults, contest) => {
-      contestResults[contest.id] = precinctContestResults[contest.id]
-      return contestResults
-    }, {}) : undefined
-    return {
-      ...precinct,
-      contestResults,
-    }
-  })
-  const precinctsReportingCount = contestResultsByPrecinct.filter((p) => !!p.contestResults).length
-  const ReportingStatus = () => <React.Fragment>Results reported from {precinctsReportingCount} of {pluralize('precinct', contestResultsByPrecinct.length, true)}.</React.Fragment>
+  const summedTalliesByPrecinct = tallies?.reduce<Dictionary<CompressedTally>>(
+    (tallies, machine) => {
+      if (tallies[machine.precinct_id]) {
+        tallies[machine.precinct_id] = sumCompressedTallies([
+          tallies[machine.precinct_id]!,
+          machine.tally,
+        ])
+      } else {
+        tallies[machine.precinct_id] = machine.tally
+      }
+      return tallies
+    },
+    {}
+  )
+  const contestResultsByPrecinct =
+    !election || !summedTalliesByPrecinct
+      ? []
+      : election.precincts.map((precinct) => {
+          const precinctContestResults =
+            summedTalliesByPrecinct[precinct.id] &&
+            getContestTallies(summedTalliesByPrecinct[precinct.id]!, election)
+          const contestResults = precinctContestResults
+            ? getContestsForPrecinct(election, precinct.id).reduce<
+                Dictionary<ContestTally>
+              >((contestResults, contest) => {
+                contestResults[contest.id] = precinctContestResults[contest.id]
+                return contestResults
+              }, {})
+            : undefined
+          return {
+            ...precinct,
+            contestResults,
+          }
+        })
+  const precinctsReportingCount = contestResultsByPrecinct.filter(
+    (p) => !!p.contestResults
+  ).length
+  const ReportingStatus = () => (
+    <React.Fragment>
+      Results reported from {precinctsReportingCount} of{' '}
+      {pluralize('precinct', contestResultsByPrecinct.length, true)}.
+    </React.Fragment>
+  )
 
   const PoweredBy = () => (
     <Container>
-      <PoweredByVotingWorks as="a" href="https://voting.works/">Powered by <VotingWorksWordmark>VotingWorks</VotingWorksWordmark></PoweredByVotingWorks>
+      <PoweredByVotingWorks as="a" href="https://voting.works/">
+        Powered by <VotingWorksWordmark>VotingWorks</VotingWorksWordmark>
+      </PoweredByVotingWorks>
     </Container>
   )
 
   const PageFooter = () => (
     <React.Fragment>
       <Container>
-        <Refresh> This page will automatically refresh when new results data are available.</Refresh>
+        <Refresh>
+          {' '}
+          This page will automatically refresh when new results data are
+          available.
+        </Refresh>
         <Refresh>
           <Button
             primary={isAudioNotification}
-            onClick={toggleIsAudioNotification}>
-            {
-              isAudioNotification
-                ? "Disable Audio Notification of New Results"
-                : "Enable Audio Notification of New Results"
-            }
+            onClick={toggleIsAudioNotification}
+          >
+            {isAudioNotification
+              ? 'Disable Audio Notification of New Results'
+              : 'Enable Audio Notification of New Results'}
           </Button>
         </Refresh>
       </Container>
@@ -507,12 +548,27 @@ const App: React.FC = () => {
     </React.Fragment>
   )
 
-  const ContestsList = ({ contestResults, election } : {contestResults: Dictionary<ContestTally>, election: Election}) => {
-    const electionCandidateContests = election?.contests.map((contest) => contest.type === "candidate" && contest) as CandidateContest[]
-    return(
+  const ContestsList = ({
+    contestResults,
+    election,
+  }: {
+    contestResults: Dictionary<ContestTally>
+    election: Election
+  }) => {
+    const electionCandidateContests = election?.contests.map(
+      (contest) => contest.type === 'candidate' && contest
+    ) as CandidateContest[]
+    return (
       <Contests>
         {electionCandidateContests?.map(
-          ({ section, title, seats, candidates, id: contestId, allowWriteIns }) => {
+          ({
+            section,
+            title,
+            seats,
+            candidates,
+            id: contestId,
+            allowWriteIns,
+          }) => {
             const contestTally = contestResults[contestId]
             if (!contestTally) {
               return
@@ -521,7 +577,7 @@ const App: React.FC = () => {
             const writeIn: CandidateInterface = {
               id: '__write-in',
               name: 'write-in',
-              partyId: ''
+              partyId: '',
             }
             const displayCandidates = [...candidates] as CandidateInterface[] // explicitly converting from readonly to mutable
             allowWriteIns && displayCandidates.push(writeIn)
@@ -534,15 +590,13 @@ const App: React.FC = () => {
                   </div>
                   {seats > 1 && (
                     <CandidateDataColumn>
-                      <CandidateDetail>
-                        {seats} seat
-                      </CandidateDetail>
+                      <CandidateDetail>{seats} seat</CandidateDetail>
                     </CandidateDataColumn>
                   )}
                 </Row>
                 <div>
                   {[...displayCandidates]
-                    .sort((a, b) =>{
+                    .sort((a, b) => {
                       const t = contestResults[contestId]
                       assert(t)
                       const ta = t.tallies[a.id]
@@ -558,28 +612,40 @@ const App: React.FC = () => {
                       return (
                         <Candidate key={candidateId}>
                           <CandidateProgressBar>
-                            <div style={{ width: formatPercentage(candidateVotes, ballots) }} />
+                            <div
+                              style={{
+                                width: formatPercentage(
+                                  candidateVotes,
+                                  ballots
+                                ),
+                              }}
+                            />
                           </CandidateProgressBar>
                           <CandidateRow data-percentage="50%">
                             <CandidateDataColumn>
                               <CandidateMain as="h3">{name}</CandidateMain>
-                              {!!partyId && <CandidateDetail>{getPartyName(election, partyId)}</CandidateDetail>}
+                              {!!partyId && (
+                                <CandidateDetail>
+                                  {getPartyName(election, partyId)}
+                                </CandidateDetail>
+                              )}
                             </CandidateDataColumn>
                             <CandidateDataColumn>
                               <CandidateMain>
                                 {formatPercentage(candidateVotes, ballots)}
                               </CandidateMain>
-                              <CandidateDetail>{pluralize('vote', candidateVotes, true)}</CandidateDetail>
+                              <CandidateDetail>
+                                {pluralize('vote', candidateVotes, true)}
+                              </CandidateDetail>
                             </CandidateDataColumn>
                           </CandidateRow>
                         </Candidate>
                       )
-                    })
-                  }
+                    })}
                   <ContestMeta>
                     <NoWrap>{pluralize('ballots', ballots, true)}</NoWrap> /{' '}
-                    <NoWrap>{pluralize('undervotes', undervotes, true)}</NoWrap> /{' '}
-                    <NoWrap>{pluralize('overvotes', overvotes, true)}</NoWrap>
+                    <NoWrap>{pluralize('undervotes', undervotes, true)}</NoWrap>{' '}
+                    / <NoWrap>{pluralize('overvotes', overvotes, true)}</NoWrap>
                   </ContestMeta>
                 </div>
               </Contest>
@@ -591,7 +657,7 @@ const App: React.FC = () => {
   }
 
   if (!electionHash) {
-    return(
+    return (
       <Main>
         <MainChild>
           <Refresh>An election hash is required.</Refresh>
@@ -601,7 +667,7 @@ const App: React.FC = () => {
   }
 
   if (!election) {
-    return(
+    return (
       <Main>
         <MainChild>
           <Refresh>Fetching the election definition…</Refresh>
@@ -625,16 +691,30 @@ const App: React.FC = () => {
             <Navigation>
               <Brand>
                 <SealImg
-                  src={election.sealURL}
+                  src={election.sealURL || election.sealUrl}
                   alt="seal"
                 />
-                <NewResultsMessage showMessage={newResults}><span>New Results!</span></NewResultsMessage>
+                <NewResultsMessage showMessage={newResults}>
+                  <span>New Results!</span>
+                </NewResultsMessage>
               </Brand>
               <NavigationContent>
-                <NavHeader>{election.county.name}, {election.state}</NavHeader>
+                <NavHeader>
+                  {election.county.name}, {election.state}
+                </NavHeader>
                 <NavTabs>
-                  <NavTab active={currentPage === 'results'} onClick={() => setCurrentPage('results')}>Results</NavTab>
-                  <NavTab active={currentPage === 'precincts'} onClick={() => setCurrentPage('precincts')}>Precincts</NavTab>
+                  <NavTab
+                    active={currentPage === 'results'}
+                    onClick={() => setCurrentPage('results')}
+                  >
+                    Results
+                  </NavTab>
+                  <NavTab
+                    active={currentPage === 'precincts'}
+                    onClick={() => setCurrentPage('precincts')}
+                  >
+                    Precincts
+                  </NavTab>
                 </NavTabs>
               </NavigationContent>
             </Navigation>
@@ -650,30 +730,36 @@ const App: React.FC = () => {
                   </Actions>
                 )}
                 <Headline>
-                  Unofficial Results{process.env.REACT_APP_IS_LIVE !== '1' && (
-		      <span> &mdash; Test Ballots</span>
-		  )}
+                  Unofficial Results
+                  {process.env.REACT_APP_IS_LIVE !== '1' && (
+                    <span> &mdash; Test Ballots</span>
+                  )}
                 </Headline>
                 {!!lastUpdatedDate && (
                   <LastUpdated>
                     Last updated on{' '}
-                    <NoWrap>{localeLongDateAndTime.format(new Date(lastUpdatedDate))}</NoWrap>.{' '}
-                    <ReportingStatus />{' '}
-                    Results do not contain absentee ballot counts.
+                    <NoWrap>
+                      {localeLongDateAndTime.format(new Date(lastUpdatedDate))}
+                    </NoWrap>
+                    . <ReportingStatus /> Results do not contain absentee ballot
+                    counts.
                   </LastUpdated>
                 )}
-                {!contestResults && (
-                  <p>No results yet reported.</p>
-                )}
+                {!contestResults && <p>No results yet reported.</p>}
                 <ElectionTitle>{election.title}</ElectionTitle>
                 <ElectionDate>
-                  <NoWrap>{localeWeekdayAndDate.format(new Date(election.date))}</NoWrap>
+                  <NoWrap>
+                    {localeWeekdayAndDate.format(new Date(election.date))}
+                  </NoWrap>
                 </ElectionDate>
               </PageHeader>
             </Container>
             <Container>
               {!!contestResults && (
-                <ContestsList contestResults={contestResults} election={election} />
+                <ContestsList
+                  contestResults={contestResults}
+                  election={election}
+                />
               )}
             </Container>
             <PageFooter />
@@ -687,9 +773,11 @@ const App: React.FC = () => {
                 {!!lastUpdatedDate && (
                   <LastUpdated>
                     Last updated on{' '}
-                    <NoWrap>{localeLongDateAndTime.format(new Date(lastUpdatedDate))}</NoWrap>.{' '}
-                    <ReportingStatus />{' '}
-                    Results do not contain absentee ballot counts.
+                    <NoWrap>
+                      {localeLongDateAndTime.format(new Date(lastUpdatedDate))}
+                    </NoWrap>
+                    . <ReportingStatus /> Results do not contain absentee ballot
+                    counts.
                   </LastUpdated>
                 )}
               </PageHeader>
@@ -704,7 +792,10 @@ const App: React.FC = () => {
                     )}
                   </PageHeader>
                   {!!precinct.contestResults && (
-                    <ContestsList contestResults={precinct.contestResults} election={election} />
+                    <ContestsList
+                      contestResults={precinct.contestResults}
+                      election={election}
+                    />
                   )}
                 </div>
               ))}
@@ -712,7 +803,12 @@ const App: React.FC = () => {
             <PageFooter />
           </React.Fragment>
         )}
-        <audio controls src="/sounds/desk-bell.mp3" ref={deskBell} style={{ display: "none" }} />
+        <audio
+          controls
+          src="/sounds/desk-bell.mp3"
+          ref={deskBell}
+          style={{ display: 'none' }}
+        />
       </React.Fragment>
     )
   }

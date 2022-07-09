@@ -1,5 +1,3 @@
-
-
 export interface ServerResult {
   machine_id: string
   precinct_id: string
